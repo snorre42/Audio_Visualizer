@@ -216,7 +216,7 @@
     vjState.tDistort = rand(0.5, 1.8); vjState.tSpeed = rand(0.6, 1.8);
     vjState.tOpacity2d = rand(0.4, 0.95); vjState.tGlow = rand(15, 50); vjState.tTrail = rand(0.75, 0.95);
   }
-  const shapeOptions = ['sphere','icosa','torus','wire'];
+  const shapeOptions = ['sphere','icosa','torus','wire','frog'];
   const mode2dOptions = ['ribbon','wave','orb','nebula','particles','mountains','tunnel'];
   const symOptions = [1,1,1,2,3,4,6,8];
   const layerOptions = ['auto','auto','both','2d-only'];
@@ -301,7 +301,49 @@
   let currentShape = null, geomData = {}, threeReady = false;
   const persistRot = { x: 0, y: 0 };
 
+  function makeFrogGeom() {
+    function part(rx, ry, rz, tx, ty, tz, detail) {
+      const g = new THREE.IcosahedronGeometry(1, detail);
+      g.scale(rx, ry, rz);
+      g.translate(tx, ty, tz);
+      const f = g.toNonIndexed(); g.dispose();
+      f.computeVertexNormals();
+      return f;
+    }
+    const parts = [
+      part(1.15, 0.70, 1.05,  0.00, -0.10,  0.00, 4),
+      part(0.62, 0.52, 0.62,  0.00,  0.28,  0.70, 4),
+      part(0.30, 0.34, 0.30, -0.34,  0.62,  0.55, 3),
+      part(0.30, 0.34, 0.30,  0.34,  0.62,  0.55, 3),
+      part(0.16, 0.18, 0.16, -0.34,  0.74,  0.62, 2),
+      part(0.16, 0.18, 0.16,  0.34,  0.74,  0.62, 2),
+      part(0.32, 0.22, 0.55, -0.78, -0.20, -0.10, 3),
+      part(0.32, 0.22, 0.55,  0.78, -0.20, -0.10, 3),
+      part(0.28, 0.20, 0.45, -0.55, -0.35,  0.55, 3),
+      part(0.28, 0.20, 0.45,  0.55, -0.35,  0.55, 3)
+    ];
+    let total = 0;
+    for (const p of parts) total += p.attributes.position.count;
+    const positions = new Float32Array(total * 3);
+    const normals = new Float32Array(total * 3);
+    let off = 0;
+    for (const p of parts) {
+      positions.set(p.attributes.position.array, off * 3);
+      normals.set(p.attributes.normal.array, off * 3);
+      off += p.attributes.position.count;
+      p.dispose();
+    }
+    const merged = new THREE.BufferGeometry();
+    merged.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    merged.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    return merged;
+  }
+
   function makeGeom(key) {
+    if (key === 'frog') {
+      const flat = makeFrogGeom();
+      return { geom: flat, basePos: new Float32Array(flat.attributes.position.array), baseNorm: new Float32Array(flat.attributes.normal.array) };
+    }
     let g;
     if (key === 'sphere') g = new THREE.IcosahedronGeometry(1, 32);
     else if (key === 'icosa') g = new THREE.IcosahedronGeometry(1.1, 3);
@@ -324,7 +366,7 @@
     const k = new THREE.DirectionalLight(0xffffff, 1.0); k.position.set(2, 3, 4); scene.add(k);
     const f = new THREE.DirectionalLight(0xaaccff, 0.5); f.position.set(-2, -1, 2); scene.add(f);
     const r = new THREE.DirectionalLight(0xffaaff, 0.8); r.position.set(0, 0, -3); scene.add(r);
-    ['sphere','icosa','torus','wire'].forEach(k => { geomData[k] = makeGeom(k); });
+    ['sphere','icosa','torus','wire','frog'].forEach(k => { geomData[k] = makeGeom(k); });
     threeReady = true;
   }
 
