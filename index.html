@@ -99,12 +99,26 @@
   #panel select { flex: 1; min-width: 0; }
   #panel input[type="range"] { flex: 1; accent-color: #a855f7; }
   #panel select {
-    background: rgba(255, 255, 255, 0.05);
+    background: #1a1a1a;
     color: #fff;
     border: 0.5px solid rgba(255, 255, 255, 0.15);
     border-radius: 4px;
     padding: 3px 6px;
     font-size: 11px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z' fill='%23999'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+  }
+  #panel select option {
+    background: #1a1a1a;
+    color: #fff;
+  }
+  #panel select:focus {
+    outline: 1px solid rgba(168, 85, 247, 0.5);
+  }
   }
   #panel input[type="color"] {
     width: 32px; height: 22px;
@@ -246,6 +260,7 @@
         <option value="icosa">Icosahedron</option>
         <option value="torus">Torus knot</option>
         <option value="wire">Wireframe globe</option>
+        <option value="frog">Frog</option>
       </select>
     </div>
     <div class="row">
