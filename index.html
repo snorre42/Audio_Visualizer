@@ -20,14 +20,17 @@
   #viz-wrap {
     position: fixed; inset: 0;
     background: #000000;
+    isolation: isolate;
   }
-  #viz-3d, #viz-2d {
+  #viz-3d, #viz-2d, #viz-bloom, #viz-fx {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     display: block;
   }
   #viz-3d { z-index: 1; }
-  #viz-2d { z-index: 2; opacity: 0; pointer-events: none; transition: opacity 200ms; }
+  #viz-bloom { z-index: 2; opacity: 0; pointer-events: none; mix-blend-mode: screen; transition: opacity 200ms; }
+  #viz-fx { z-index: 2; opacity: 0; pointer-events: none; mix-blend-mode: screen; transition: opacity 200ms; }
+  #viz-2d { z-index: 3; opacity: 0; pointer-events: none; transition: opacity 200ms; }
 
   /* Slim bottom bar with main controls */
   #bottom-bar {
@@ -72,7 +75,7 @@
   #panel {
     position: fixed;
     top: 12px; right: 12px; bottom: 70px;
-    width: 250px;
+    width: 300px;
     background: rgba(10, 10, 14, 0.92);
     backdrop-filter: blur(12px);
     border: 0.5px solid rgba(255, 255, 255, 0.12);
@@ -127,6 +130,27 @@
     background: transparent;
     cursor: pointer;
     padding: 0;
+  }
+  #panel input[type="checkbox"] {
+    width: 15px; height: 15px;
+    flex: 0 0 auto;
+    accent-color: #a855f7;
+    cursor: pointer;
+  }
+  #panel button {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  #panel button:hover { background: rgba(255, 255, 255, 0.16); }
+  #panel button.on {
+    background: rgba(34, 197, 94, 0.4);
+    border-color: rgba(34, 197, 94, 0.6);
   }
   .slider-val {
     font-size: 10px;
@@ -209,6 +233,36 @@
     font-weight: 600;
   }
 
+  /* Clean / hidden-UI mode (press H) */
+  body.ui-hidden #bottom-bar,
+  body.ui-hidden #panel,
+  body.ui-hidden #intro,
+  body.ui-hidden #credit,
+  body.ui-hidden #beat-pulse,
+  body.ui-hidden #fps-tag,
+  body.ui-hidden #vj-tag { opacity: 0 !important; pointer-events: none; }
+  body.ui-hidden { cursor: none; }
+
+  /* Toast / shortcut feedback */
+  #toast {
+    position: fixed;
+    bottom: 64px; left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(10px);
+    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms, transform 200ms;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   /* Mobile tweaks */
   @media (max-width: 600px) {
     #panel { right: 6px; left: 6px; width: auto; }
@@ -220,6 +274,8 @@
 <body>
   <div id="viz-wrap">
     <canvas id="viz-3d"></canvas>
+    <canvas id="viz-bloom"></canvas>
+    <canvas id="viz-fx"></canvas>
     <canvas id="viz-2d"></canvas>
   </div>
 
@@ -229,6 +285,7 @@
   </div>
 
   <div id="vj-tag">AUTO-VJ</div>
+  <div id="toast"></div>
   <div id="beat-pulse"></div>
   <div id="fps-tag">—</div>
   <div id="credit"><span class="by">by</span><span class="name">Snorre</span></div>
@@ -238,12 +295,31 @@
     <button id="btn-file" title="Upload audio file">📁 File</button>
     <button id="btn-demo" title="Demo tone">▶ Demo</button>
     <button id="btn-beat" title="Beat demo">⏱ Beat</button>
-    <button id="btn-vj" class="primary" title="Toggle Auto-VJ">✨ Auto-VJ</button>
+    <button id="btn-pause" title="Pause animation and music (Space)">⏸ Pause</button>
+    <button id="btn-vj" class="primary" title="Toggle Auto-VJ (V)">✨ Auto-VJ</button>
+    <button id="btn-fs" title="Fullscreen (F)">⛶ Full</button>
     <button id="btn-panel" title="Settings">⚙</button>
     <input type="file" id="file-input" accept="audio/*" style="display: none;" />
   </div>
 
-  <div id="panel">
+  <div id="panel" class="open">
+    <h3>Playback</h3>
+    <div class="row">
+      <label>Volume</label>
+      <input type="range" id="volume" min="0" max="100" value="80">
+      <span id="volume-val" class="slider-val">80</span>
+    </div>
+    <div class="row">
+      <label>3D zoom</label>
+      <input type="range" id="zoom" min="40" max="220" value="100">
+      <span id="zoom-val" class="slider-val">100</span>
+    </div>
+    <div class="row">
+      <label>2D zoom</label>
+      <input type="range" id="zoom2d" min="40" max="220" value="100">
+      <span id="zoom2d-val" class="slider-val">100</span>
+    </div>
+
     <h3>Mode</h3>
     <div class="row">
       <label>Layers</label>
@@ -261,6 +337,9 @@
         <option value="torus">Torus knot</option>
         <option value="wire">Wireframe globe</option>
         <option value="frog">Frog</option>
+        <option value="cow">Cow</option>
+        <option value="cat">Cat</option>
+        <option value="mushroom">Mushroom</option>
       </select>
     </div>
     <div class="row">
@@ -273,6 +352,10 @@
         <option value="particles">Particles</option>
         <option value="mountains">Mountains</option>
         <option value="tunnel">Tunnel</option>
+        <option value="spectrum">Spectrum bars</option>
+        <option value="rings">Pulse rings</option>
+        <option value="stars">Starfield</option>
+        <option value="cosmos">Cosmos</option>
       </select>
     </div>
     <div class="row">
@@ -371,6 +454,61 @@
       <label>Trails</label>
       <input type="range" id="trail" min="0" max="98" value="86">
       <span id="trail-val" class="slider-val">86</span>
+    </div>
+
+    <h3>Motion &amp; FX</h3>
+    <div class="row">
+      <label>Bloom</label>
+      <input type="checkbox" id="bloom-on">
+      <input type="range" id="bloom" min="0" max="100" value="45">
+      <span id="bloom-val" class="slider-val">45</span>
+    </div>
+    <div class="row">
+      <label>Hue cycle</label>
+      <input type="checkbox" id="hue-on">
+      <input type="range" id="hue-speed" min="0" max="100" value="30">
+      <span id="hue-speed-val" class="slider-val">30</span>
+    </div>
+    <div class="row">
+      <label>Camera</label>
+      <select id="cam-motion">
+        <option value="none" selected>Fixed</option>
+        <option value="orbit">Auto-orbit</option>
+        <option value="dolly">Dolly</option>
+        <option value="sway">Sway</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>RGB split</label>
+      <input type="checkbox" id="ab-on">
+      <input type="range" id="ab" min="0" max="100" value="40">
+      <span id="ab-val" class="slider-val">40</span>
+    </div>
+    <div class="row">
+      <label>Feedback</label>
+      <input type="checkbox" id="fb-on">
+      <input type="range" id="fb" min="0" max="100" value="45">
+      <span id="fb-val" class="slider-val">45</span>
+    </div>
+    <div class="row">
+      <label>Shake</label>
+      <input type="range" id="shake" min="0" max="100" value="0">
+      <span id="shake-val" class="slider-val">0</span>
+    </div>
+    <div class="row">
+      <label>Morph</label>
+      <input type="checkbox" id="morph-on" checked>
+    </div>
+    <div class="row">
+      <label>Fog</label>
+      <input type="checkbox" id="fog-on">
+      <input type="range" id="fog" min="0" max="100" value="50">
+      <span id="fog-val" class="slider-val">50</span>
+    </div>
+    <div class="row">
+      <label>MIDI</label>
+      <button id="btn-midi">Enable</button>
+      <span id="midi-status" class="slider-val">—</span>
     </div>
   </div>
 
