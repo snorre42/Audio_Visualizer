@@ -6,16 +6,73 @@
 <title>Audio Visualizer — by Snorre</title>
 <meta name="description" content="Interactive audio visualizer by Snorre — drop a track or use your mic">
 <meta name="author" content="Snorre">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Saira+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ══════════════════════════════════════════════════════════
+     "SPECTRA-9" — dressed as the front panel of a 1978 rack
+     tuner. Brushed chassis, silkscreen labels, amber VFD
+     readouts, mint indicator lamps, real fader caps.
+     ══════════════════════════════════════════════════════════ */
+  :root {
+    --void:      #070503;
+    --chassis-1: #1b1510;
+    --chassis-2: #0e0a07;
+    --chassis-3: #241c14;
+    --etch:      rgba(255, 190, 110, 0.13);
+    --bevel:     rgba(255, 214, 160, 0.20);
+
+    --vfd:       #ffa724;
+    --vfd-hi:    #ffd8a4;
+    --vfd-dim:   rgba(255, 167, 36, 0.45);
+    --vfd-ghost: rgba(255, 167, 36, 0.12);
+
+    --lamp:      #4fe0c0;
+    --lamp-dim:  rgba(79, 224, 192, 0.30);
+
+    --ink:       #f2e0c8;
+    --ink-dim:   rgba(242, 224, 200, 0.52);
+
+    --silk: "Saira Condensed", "Oswald", "Arial Narrow", sans-serif;
+    --seg:  "DotGothic16", "Courier New", monospace;
+
+    /* Type scale — four steps, ~1.27 ratio. Nothing below the 11px floor. */
+    --t-label: 12px;  /* silkscreen labels, buttons        */
+    --t-read:  15px;  /* VFD readouts, values, selects     */
+    --t-head:  19px;  /* section headers                   */
+    --t-title: 24px;  /* spec-plate title                  */
+
+    /* Contact shadows — tight and neutral, the way real hardware sits. */
+    --lift-sm: 0 1px 2px rgba(0,0,0,0.6);
+    --lift-md: 0 1px 2px rgba(0,0,0,0.65), 0 3px 7px rgba(0,0,0,0.5);
+    --lift-lg: 0 1px 3px rgba(0,0,0,0.75), 0 5px 11px rgba(0,0,0,0.6);
+
+    --brushed: linear-gradient(180deg, var(--chassis-3), var(--chassis-1) 55%, var(--chassis-2));
+  }
+
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%; width: 100%;
-    background: #000000;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: #fff;
+    background: var(--void);
+    font-family: var(--silk);
+    color: var(--ink);
     overflow: hidden;
     user-select: none;
+    -webkit-font-smoothing: antialiased;
   }
+
+  @keyframes riseIn { from { opacity: 0; translate: 0 18px; } }
+  @keyframes vfdOn {
+    0%   { filter: brightness(0.15) saturate(0.2); }
+    16%  { filter: brightness(1.55) saturate(1.25); }
+    24%  { filter: brightness(0.45); }
+    40%  { filter: brightness(1.3); }
+    56%  { filter: brightness(0.75); }
+    72%  { filter: brightness(1.12); }
+    100% { filter: brightness(1); }
+  }
+  @keyframes lampBlink { 50% { opacity: 0.45; } }
 
   #viz-wrap {
     position: fixed; inset: 0;
@@ -32,205 +89,383 @@
   #viz-fx { z-index: 2; opacity: 0; pointer-events: none; mix-blend-mode: screen; transition: opacity 200ms; }
   #viz-2d { z-index: 3; opacity: 0; pointer-events: none; transition: opacity 200ms; }
 
-  /* Slim bottom bar with main controls */
+  /* ── Transport deck ─────────────────────────────────────── */
   #bottom-bar {
     position: fixed;
-    bottom: 12px; left: 50%;
+    bottom: 16px; left: 50%;
     transform: translateX(-50%);
     z-index: 30;
-    display: flex; gap: 6px;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(12px);
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    padding: 6px;
-    opacity: 0.4;
-    transition: opacity 250ms;
+    display: flex; gap: 3px;
+    padding: 5px 6px;
+    background: var(--brushed);
+    border: 1px solid #000;
+    border-top-color: var(--bevel);
+    border-radius: 3px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,226,190,0.12),
+      inset 0 -8px 16px rgba(0,0,0,0.55),
+      var(--lift-md);
+    opacity: 0.45;
+    transition: opacity 260ms;
+    animation: riseIn 720ms cubic-bezier(.2,.85,.25,1) 400ms backwards;
   }
   body:hover #bottom-bar { opacity: 1; }
   #bottom-bar button {
-    background: transparent;
-    color: #fff;
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 12px;
-    cursor: pointer;
+    font-family: var(--silk);
+    font-size: var(--t-label);
     font-weight: 500;
-    transition: background 150ms;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: linear-gradient(180deg, #2a211a, #140f0b 62%, #0b0806);
+    border: 1px solid #000;
+    border-top-color: rgba(255,214,160,0.16);
+    border-radius: 2px;
+    padding: 8px 14px 7px;
+    cursor: pointer;
     white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.09), var(--lift-sm);
+    transition: color 140ms, box-shadow 160ms, background 160ms;
   }
-  #bottom-bar button:hover { background: rgba(255, 255, 255, 0.15); }
+  #bottom-bar button:hover {
+    color: var(--vfd-hi);
+    background: linear-gradient(180deg, #35291f, #1a130d 62%, #0d0906);
+  }
+  #bottom-bar button:active {
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.85);
+    padding: 9px 14px 6px;
+  }
   #bottom-bar button.primary {
-    background: rgba(168, 85, 247, 0.5);
-    border-color: rgba(168, 85, 247, 0.7);
+    color: var(--vfd);
+    border-top-color: rgba(255,167,36,0.4);
   }
-  #bottom-bar button.primary:hover { background: rgba(168, 85, 247, 0.7); }
+  #bottom-bar button.primary:hover { color: var(--vfd-hi); }
   #bottom-bar button.on {
-    background: rgba(34, 197, 94, 0.4);
-    border-color: rgba(34, 197, 94, 0.6);
+    color: #071a15;
+    background: linear-gradient(180deg, #7df0d6, var(--lamp) 55%, #1d7d68);
+    border-top-color: #b8ffee;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), var(--lift-sm);
   }
 
   /* Settings panel */
+  /* ── VFD display module ─────────────────────────────────── */
   #panel {
     position: fixed;
-    top: 12px; right: 12px; bottom: 70px;
-    width: 300px;
-    background: rgba(10, 10, 14, 0.92);
-    backdrop-filter: blur(12px);
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    padding: 14px;
+    top: 14px; right: 14px; bottom: 78px;
+    width: 296px;
+    padding: 15px 14px 16px;
     overflow-y: auto;
-    transform: translateX(calc(100% + 24px));
-    transition: transform 250ms;
     z-index: 25;
     font-size: 12px;
-  }
-  #panel.open { transform: translateX(0); }
-  #panel h3 {
-    margin: 14px 0 6px;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.55;
-    font-weight: 600;
-  }
-  #panel h3:first-child { margin-top: 0; }
-  #panel .row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-  #panel label { font-size: 11px; opacity: 0.75; min-width: 64px; }
-  #panel select { flex: 1; min-width: 0; }
-  #panel input[type="range"] { flex: 1; accent-color: #a855f7; }
-  #panel select {
-    background: #1a1a1a;
-    color: #fff;
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
+    color: var(--vfd);
+    background:
+      repeating-linear-gradient(0deg, rgba(255,167,36,0.030) 0 1px, transparent 1px 4px),
+      radial-gradient(120% 80% at 50% 0%, rgba(255,167,36,0.09), transparent 62%),
+      linear-gradient(180deg, #16110c, #0a0705 70%);
+    border: 1px solid #000;
+    border-top-color: var(--bevel);
     border-radius: 4px;
-    padding: 3px 6px;
-    font-size: 11px;
+    box-shadow:
+      inset 0 1px 0 rgba(255,226,190,0.13),
+      var(--lift-lg);
+    transform: translateX(calc(100% + 26px));
+    transition: transform 340ms cubic-bezier(.3,.9,.25,1);
+    scrollbar-width: thin;
+    scrollbar-color: var(--vfd-dim) transparent;
+  }
+  #panel.open { transform: translateX(0); animation: vfdOn 620ms steps(1, end) 220ms backwards; }
+  #panel::-webkit-scrollbar { width: 7px; }
+  #panel::-webkit-scrollbar-track { background: #000; }
+  #panel::-webkit-scrollbar-thumb { background: var(--vfd-dim); border-radius: 0; }
+
+  #panel h3 {
+    margin: 20px 0 9px;
+    font-family: var(--seg);
+    font-size: var(--t-head);
+    letter-spacing: 0.06em;
+    color: var(--vfd);
+    text-shadow: 0 0 12px var(--vfd-ghost);  /* emissive: this IS the display */
+    font-weight: 400;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 5px 7px;
+    border-bottom: 1px solid var(--etch);
+    transition: color 150ms;
+  }
+  #panel h3:hover { color: var(--vfd-hi); }
+  #panel h3:first-child { margin-top: 0; }
+  #panel h3::before {
+    content: '';
+    width: 0; height: 0;
+    border-left: 6px solid currentColor;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 200ms cubic-bezier(.3,.9,.25,1);
+    transform: rotate(90deg);
+    flex: 0 0 auto;
+  }
+  #panel h3.collapsed::before { transform: rotate(0deg); }
+  .sect { overflow: hidden; padding-top: 3px; }
+  .sect.hidden { display: none; }
+
+  #panel .row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+  #panel label {
+    font-family: var(--silk);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    min-width: 66px;
+  }
+
+  /* Selects — chassis switch */
+  #panel select {
+    flex: 1; min-width: 0;
+    font-family: var(--silk);
+    font-size: var(--t-label);
+    letter-spacing: 0.05em;
+    color: var(--vfd);
+    background-color: #0b0806;
+    border: 1px solid #000;
+    border-top-color: rgba(255,214,160,0.14);
+    border-radius: 2px;
+    padding: 5px 20px 5px 8px;
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z' fill='%23999'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'><path d='M0 0l4.5 6L9 0z' fill='%23ffa724'/></svg>");
     background-repeat: no-repeat;
     background-position: right 6px center;
-    padding-right: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.7);
+    cursor: pointer;
+    transition: color 140ms, box-shadow 160ms;
   }
-  #panel select option {
-    background: #1a1a1a;
-    color: #fff;
+  #panel select:hover { color: var(--vfd-hi); border-top-color: var(--vfd-dim); }
+  #panel select:focus { outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.7), 0 0 0 1px var(--vfd-dim); }
+  #panel select option { background: #0b0806; color: var(--ink); font-size: var(--t-label); }
+  #panel select optgroup {
+    background: #050403;
+    color: var(--vfd-dim);
+    font-family: var(--seg);
+    font-size: var(--t-label);
+    letter-spacing: 0.08em;
   }
-  #panel select:focus {
-    outline: 1px solid rgba(168, 85, 247, 0.5);
+
+  /* Faders — recessed groove + metal cap */
+  #panel input[type="range"] {
+    flex: 1; min-width: 0;
+    -webkit-appearance: none; appearance: none;
+    height: 18px;
+    background: transparent;
+    cursor: pointer;
   }
+  #panel input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: linear-gradient(180deg, #000, #211a13);
+    box-shadow: inset 0 1px 3px #000, 0 1px 0 rgba(255,214,160,0.10);
+    border-radius: 1px;
   }
+  #panel input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 11px; height: 18px;
+    margin-top: -7px;
+    border-radius: 2px;
+    border: 1px solid #000;
+    background:
+      linear-gradient(180deg, #6d5b45 0 46%, #241c14 46% 54%, #6d5b45 54% 100%);
+    box-shadow: var(--lift-sm);
+    transition: background 160ms, border-color 160ms;
+  }
+  #panel input[type="range"]:hover::-webkit-slider-thumb,
+  #panel input[type="range"]:active::-webkit-slider-thumb {
+    background: linear-gradient(180deg, #9c8666 0 46%, #2e241a 46% 54%, #9c8666 54% 100%);
+    border-color: #3a2e21;
+  }
+  #panel input[type="range"]::-moz-range-track {
+    height: 4px; border-radius: 1px;
+    background: linear-gradient(180deg, #000, #211a13);
+    box-shadow: inset 0 1px 3px #000;
+  }
+  #panel input[type="range"]::-moz-range-thumb {
+    width: 9px; height: 16px;
+    border-radius: 2px; border: 1px solid #000;
+    background: linear-gradient(180deg, #6d5b45 0 46%, #241c14 46% 54%, #6d5b45 54% 100%);
+    box-shadow: var(--lift-sm);
+  }
+
+  /* Indicator lamps */
+  #panel input[type="checkbox"] {
+    -webkit-appearance: none; appearance: none;
+    width: 13px; height: 13px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    border: 1px solid #000;
+    background: radial-gradient(circle at 34% 30%, #2c2219, #0a0705);
+    box-shadow: inset 0 1px 1px rgba(255,226,190,0.10);
+    cursor: pointer;
+    transition: background 180ms, box-shadow 180ms;
+  }
+  /* The one lamp that genuinely emits — keep its halo. */
+  #panel input[type="checkbox"]:checked {
+    background: radial-gradient(circle at 34% 30%, #c8fff0, var(--lamp) 55%, #166655);
+    box-shadow: 0 0 9px var(--lamp-dim), inset 0 1px 1px rgba(255,255,255,0.55);
+  }
+
   #panel input[type="color"] {
-    width: 32px; height: 22px;
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
+    width: 32px; height: 23px;
+    border: 1px solid #000;
+    border-top-color: rgba(255,214,160,0.2);
+    border-radius: 2px;
     background: transparent;
     cursor: pointer;
     padding: 0;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.7);
   }
-  #panel input[type="checkbox"] {
-    width: 15px; height: 15px;
-    flex: 0 0 auto;
-    accent-color: #a855f7;
-    cursor: pointer;
-  }
+
   #panel button {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border: 0.5px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 11px;
+    font-family: var(--silk);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: linear-gradient(180deg, #2a211a, #120d09);
+    border: 1px solid #000;
+    border-top-color: rgba(255,214,160,0.16);
+    border-radius: 2px;
+    padding: 6px 13px;
     cursor: pointer;
     flex: 0 0 auto;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.08);
+    transition: color 140ms, background 150ms;
   }
-  #panel button:hover { background: rgba(255, 255, 255, 0.16); }
+  #panel button:hover { color: var(--vfd-hi); background: linear-gradient(180deg, #35291f, #1a130d); }
+  #panel button:active { box-shadow: inset 0 2px 5px rgba(0,0,0,0.85); }
   #panel button.on {
-    background: rgba(34, 197, 94, 0.4);
-    border-color: rgba(34, 197, 94, 0.6);
+    color: #071a15;
+    background: linear-gradient(180deg, #7df0d6, var(--lamp) 55%, #1d7d68);
+    border-top-color: #b8ffee;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), var(--lift-sm);
   }
+
+  #btn-reset {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    letter-spacing: 0.16em;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #241c14, #0d0906);
+  }
+
+  /* Readout — emissive by design. */
   .slider-val {
-    font-size: 10px;
-    opacity: 0.6;
-    min-width: 24px;
+    font-family: var(--seg);
+    font-size: var(--t-read);
+    color: var(--vfd);
+    text-shadow: 0 0 10px var(--vfd-ghost);
+    min-width: 30px;
     text-align: right;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Top-left intro overlay */
+  /* ── Spec plate ─────────────────────────────────────────── */
   #intro {
     position: fixed;
-    top: 12px; left: 12px;
+    top: 14px; left: 14px;
     z-index: 28;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(8px);
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 11px;
-    opacity: 0.85;
-    max-width: 240px;
-    transition: opacity 300ms;
+    padding: 13px 16px 14px;
+    max-width: 262px;
+    font-size: var(--t-label);
+    background: linear-gradient(180deg, #1b1510, #0a0705);
+    border: 1px solid #000;
+    border-top-color: var(--bevel);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.1), var(--lift-md);
+    transition: opacity 400ms;
+    animation: riseIn 700ms cubic-bezier(.2,.85,.25,1) 120ms backwards;
   }
   #intro.hidden { opacity: 0; pointer-events: none; }
   #intro .title {
-    font-weight: 600;
-    margin-bottom: 4px;
-    font-size: 12px;
+    font-family: var(--seg);
+    font-size: var(--t-title);
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    color: var(--vfd);
+    text-shadow: 0 0 14px var(--vfd-ghost);  /* emissive readout */
+    margin-bottom: 9px;
   }
-  #intro .desc { opacity: 0.7; line-height: 1.4; }
+  #intro .desc {
+    color: var(--ink-dim);
+    line-height: 1.6;
+    letter-spacing: 0.03em;
+  }
+  #intro .desc b {
+    font-family: var(--seg);
+    font-weight: 400;
+    color: var(--vfd);
+    padding: 0 1px;
+  }
 
-  /* Status indicators */
+  /* ── Status lamps ───────────────────────────────────────── */
   #beat-pulse {
     position: fixed;
-    bottom: 70px; left: 14px;
-    width: 8px; height: 8px;
+    bottom: 78px; left: 18px;
+    width: 9px; height: 9px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.15);
-    transition: background 80ms, transform 80ms;
+    border: 1px solid #000;
+    transition: background 80ms, transform 80ms, box-shadow 80ms;
     z-index: 20;
-    opacity: 0.5;
+    opacity: 0.75;
   }
   #fps-tag {
     position: fixed;
-    bottom: 70px; right: 14px;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 10px;
+    bottom: 76px; right: 18px;
+    font-family: var(--seg);
+    color: var(--vfd-dim);
+    font-size: var(--t-label);
+    letter-spacing: 0.08em;
     z-index: 20;
     font-variant-numeric: tabular-nums;
-    opacity: 0.5;
   }
   #credit {
     position: fixed;
-    top: 14px; right: 18px;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
+    top: 18px; right: 20px;
+    font-family: var(--silk);
+    color: var(--ink-dim);
+    font-size: var(--t-label);
     z-index: 15;
-    font-weight: 300;
-    letter-spacing: 0.18em;
+    font-weight: 400;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     pointer-events: none;
-    opacity: 0.75;
-    transition: opacity 250ms;
+    opacity: 0.7;
+    transition: opacity 300ms;
+    animation: riseIn 700ms cubic-bezier(.2,.85,.25,1) 260ms backwards;
   }
   body:hover #credit { opacity: 1; }
-  #credit .by { opacity: 0.55; margin-right: 5px; font-weight: 300; }
-  #credit .name { color: #e0e0e0; font-weight: 400; }
+  #credit .by { opacity: 0.45; margin-right: 6px; }
+  #credit .name { color: var(--vfd); }
+  /* Backlit indicator — the halo is the lamp, not decoration. */
   #vj-tag {
     position: fixed;
-    top: 12px; left: 50%; transform: translateX(-50%);
-    padding: 4px 12px;
-    background: rgba(168, 85, 247, 0.85);
-    color: #fff;
-    font-size: 10px;
-    border-radius: 999px;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    padding: 6px 15px 5px;
+    font-family: var(--seg);
+    background: linear-gradient(180deg, #ffc46b, var(--vfd) 55%, #b96b06);
+    color: #1a0e00;
+    font-size: var(--t-label);
+    border: 1px solid #000;
+    border-top-color: #ffe0b0;
+    border-radius: 2px;
     display: none;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.2em;
     z-index: 28;
-    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 0 14px rgba(255,167,36,0.35);
+    animation: lampBlink 1.9s ease-in-out infinite;
   }
 
   /* Clean / hidden-UI mode (press H) */
@@ -240,34 +475,114 @@
   body.ui-hidden #credit,
   body.ui-hidden #beat-pulse,
   body.ui-hidden #fps-tag,
+  body.ui-hidden #keys,
   body.ui-hidden #vj-tag { opacity: 0 !important; pointer-events: none; }
   body.ui-hidden { cursor: none; }
 
-  /* Toast / shortcut feedback */
+  /* ── Readout toast ──────────────────────────────────────── */
   #toast {
     position: fixed;
-    bottom: 64px; left: 50%;
-    transform: translateX(-50%) translateY(8px);
-    background: rgba(0, 0, 0, 0.72);
-    backdrop-filter: blur(10px);
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-size: 12px;
-    padding: 7px 16px;
-    border-radius: 999px;
+    bottom: 72px; left: 50%;
+    transform: translateX(-50%);
+    translate: 0 8px;
+    font-family: var(--seg);
+    font-size: var(--t-read);
+    letter-spacing: 0.06em;
+    color: var(--vfd);
+    text-shadow: 0 0 10px var(--vfd-ghost);  /* emissive readout */
+    background: linear-gradient(180deg, #1b1510, #0a0705);
+    border: 1px solid #000;
+    border-top-color: var(--bevel);
+    border-radius: 2px;
+    padding: 9px 18px 8px;
     z-index: 40;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 200ms, transform 200ms;
+    transition: opacity 220ms, translate 220ms;
     white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.1), var(--lift-md);
   }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.show { opacity: 1; translate: 0 0; }
+
+  /* ── Shortcut card ──────────────────────────────────────── */
+  #keys {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    scale: 0.95;
+    padding: 22px 26px 20px;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms, scale 200ms cubic-bezier(.3,.9,.25,1);
+    font-size: var(--t-label);
+    min-width: 290px;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,167,36,0.030) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #1b1510, #0a0705 75%);
+    border: 1px solid #000;
+    border-top-color: var(--bevel);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.1), var(--lift-lg);
+  }
+  #keys.show { opacity: 1; scale: 1; }
+  #keys h4 {
+    margin: 0 0 16px;
+    font-family: var(--seg);
+    font-size: var(--t-head);
+    letter-spacing: 0.06em;
+    color: var(--vfd);
+    text-shadow: 0 0 12px var(--vfd-ghost);  /* emissive readout */
+    font-weight: 400;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--etch);
+  }
+  #keys .k {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 10px;
+  }
+  #keys .k span {
+    font-family: var(--silk);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: var(--t-label);
+    color: var(--ink-dim);
+  }
+  #keys kbd {
+    font-family: var(--seg);
+    color: var(--vfd);
+    background: linear-gradient(180deg, #2a211a, #0d0906);
+    border: 1px solid #000;
+    border-top-color: rgba(255,214,160,0.2);
+    border-radius: 2px;
+    padding: 3px 9px 2px;
+    font-size: var(--t-label);
+    letter-spacing: 0.06em;
+    min-width: 26px;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255,226,190,0.1), var(--lift-sm);
+  }
+  #keys .hint {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--etch);
+    color: var(--ink-dim);
+    opacity: 0.7;
+    font-size: var(--t-label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+  }
 
   /* Mobile tweaks */
   @media (max-width: 600px) {
-    #panel { right: 6px; left: 6px; width: auto; }
-    #bottom-bar button { padding: 6px 10px; font-size: 11px; }
-    #intro { max-width: calc(100vw - 24px); }
+    #panel { right: 7px; left: 7px; width: auto; }
+    #bottom-bar { gap: 2px; padding: 4px; }
+    #bottom-bar button { padding: 6px 8px; font-size: 11px; letter-spacing: 0.04em; }
+    #intro { max-width: calc(100vw - 28px); }
   }
 </style>
 </head>
@@ -281,24 +596,40 @@
 
   <div id="intro">
     <div class="title">Audio Visualizer</div>
-    <div class="desc">Click a source below to start. Try Auto-VJ with your own track.</div>
+    <div class="desc">Click a source below to start. Try Auto-VJ with your own track.<br><b>H</b> hides the UI · <b>?</b> shows all shortcuts.</div>
   </div>
 
   <div id="vj-tag">AUTO-VJ</div>
   <div id="toast"></div>
+
+  <div id="keys">
+    <h4>Keyboard shortcuts</h4>
+    <div class="k"><span>Play / pause</span><kbd>Space</kbd></div>
+    <div class="k"><span>Hide all UI</span><kbd>H</kbd></div>
+    <div class="k"><span>Fullscreen</span><kbd>F</kbd></div>
+    <div class="k"><span>Randomize look</span><kbd>R</kbd></div>
+    <div class="k"><span>Toggle Auto-VJ</span><kbd>V</kbd></div>
+    <div class="k"><span>Settings panel</span><kbd>P</kbd></div>
+    <div class="k"><span>Prev / next 3D shape</span><kbd>← →</kbd></div>
+    <div class="k"><span>Prev / next 2D mode</span><kbd>↑ ↓</kbd></div>
+    <div class="hint">Press ? or Esc to close</div>
+  </div>
   <div id="beat-pulse"></div>
   <div id="fps-tag">—</div>
   <div id="credit"><span class="by">by</span><span class="name">Snorre</span></div>
 
   <div id="bottom-bar">
     <button id="btn-mic" title="Microphone">🎤 Mic</button>
+    <button id="btn-sys" title="System / tab audio — tick &quot;share audio&quot; in the dialog">🔊 System</button>
     <button id="btn-file" title="Upload audio file">📁 File</button>
     <button id="btn-demo" title="Demo tone">▶ Demo</button>
     <button id="btn-beat" title="Beat demo">⏱ Beat</button>
     <button id="btn-pause" title="Pause animation and music (Space)">⏸ Pause</button>
     <button id="btn-vj" class="primary" title="Toggle Auto-VJ (V)">✨ Auto-VJ</button>
     <button id="btn-fs" title="Fullscreen (F)">⛶ Full</button>
-    <button id="btn-panel" title="Settings">⚙</button>
+    <button id="btn-hide" title="Hide all UI (H)">👁 Hide</button>
+    <button id="btn-keys" title="Keyboard shortcuts (?)">?</button>
+    <button id="btn-panel" title="Settings (P)">⚙</button>
     <input type="file" id="file-input" accept="audio/*" style="display: none;" />
   </div>
 
@@ -332,14 +663,26 @@
     <div class="row">
       <label>3D shape</label>
       <select id="shape3d">
-        <option value="sphere" selected>Sphere (blob)</option>
-        <option value="icosa">Icosahedron</option>
-        <option value="torus">Torus knot</option>
-        <option value="wire">Wireframe globe</option>
-        <option value="frog">Frog</option>
-        <option value="cow">Cow</option>
-        <option value="cat">Cat</option>
-        <option value="mushroom">Mushroom</option>
+        <optgroup label="Abstract">
+          <option value="sphere" selected>Sphere (blob)</option>
+          <option value="icosa">Icosahedron</option>
+          <option value="torus">Torus knot</option>
+          <option value="wire">Wireframe globe</option>
+          <option value="diamond">Diamond</option>
+        </optgroup>
+        <optgroup label="Creatures">
+          <option value="frog">Frog</option>
+          <option value="cow">Cow</option>
+          <option value="cat">Cat</option>
+        </optgroup>
+        <optgroup label="Objects">
+          <option value="mushroom">Mushroom</option>
+          <option value="heart">Heart</option>
+          <option value="pumpkin">Pumpkin</option>
+          <option value="snowman">Snowman</option>
+          <option value="robot">Robot</option>
+          <option value="rocket">Rocket</option>
+        </optgroup>
       </select>
     </div>
     <div class="row">
@@ -353,7 +696,17 @@
         <option value="mountains">Mountains</option>
         <option value="tunnel">Tunnel</option>
         <option value="spectrum">Spectrum bars</option>
+        <option value="eq">EQ (classic)</option>
+        <option value="radial">Radial spectrum</option>
+        <option value="scope">Oscilloscope</option>
+        <option value="waterfall">Waterfall</option>
+        <option value="grid">LED grid</option>
         <option value="rings">Pulse rings</option>
+        <option value="ripples">Ripples</option>
+        <option value="corona">Coronal ejection</option>
+        <option value="plasma">Plasma</option>
+        <option value="fireworks">Fireworks</option>
+        <option value="drain">Down the drain</option>
         <option value="stars">Starfield</option>
         <option value="cosmos">Cosmos</option>
       </select>
@@ -510,6 +863,8 @@
       <button id="btn-midi">Enable</button>
       <span id="midi-status" class="slider-val">—</span>
     </div>
+
+    <button id="btn-reset" title="Restore all settings to defaults">↺ Reset to defaults</button>
   </div>
 
   <script src="three.min.js"></script>
