@@ -1,0 +1,10 @@
+# AI coding-agent tooling (impeccable skills, harness config, hooks).
+# Kept local: .claude/settings.local.json registers hooks that run on
+# every edit, which shouldn't be imposed on anyone who clones this repo.
+.claude/
+.agents/
+.codex/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
