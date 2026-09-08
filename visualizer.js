@@ -65,6 +65,11 @@
   const morphOnEl = document.getElementById('morph-on');
   const fogOnEl = document.getElementById('fog-on');
   const fogEl = document.getElementById('fog');
+  // Embedded on itch.io (and anywhere else that iframes the page), the parent
+  // decides which powerful features this document may use. getUserMedia and
+  // getDisplayMedia are withheld by default, and nothing inside the frame can
+  // grant them back — the only fix is to leave the frame.
+  const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   const vjSyncEl = document.getElementById('vj-sync');
   const bpmTag = document.getElementById('bpm-tag');
   const tempoVal = document.getElementById('tempo-val');
@@ -121,24 +126,27 @@
         theme: { spectra:'Retro · rack tuner', aero:'Aero · Vista glass' }
       },
       grp: { Abstract:'Abstract', Models:'Models', Mine:'Mine' },
-      btn: { 'btn-mic':'🎤 Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
-        'btn-beat':'⏱ Beat', 'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
-        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap' },
+      btn: { 'btn-mic':'Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
+        'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
+        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap',
+        'btn-pop':'⧉ New window' },
       tip: { 'btn-mic':'Microphone', 'btn-sys':'System / tab audio — tick "share audio" in the dialog',
-        'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo',
+        'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo — press again to stop',
         'btn-pause':'Pause animation and music (Space)', 'btn-vj':'Toggle Auto-VJ (V)',
         'btn-fs':'Fullscreen (F)', 'btn-hide':'Hide all UI (H)', 'btn-keys':'Keyboard shortcuts (?)',
         'btn-panel':'Settings (P)', 'btn-reset':'Restore all settings to defaults',
         'btn-model':'Load your own .obj, .stl or .glb model',
         'btn-model-del':'Remove this model permanently',
-        'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.' },
+        'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.',
+        'btn-pop':'Open in its own window — needed for microphone and system audio when embedded' },
       keys: { title:'Keyboard shortcuts', hint:'Press ? or Esc to close',
         rows:['Play / pause','Hide all UI','Fullscreen','Randomize look','Toggle Auto-VJ','Tap tempo',
               'Settings panel','Switch skin','Prev / next 3D shape','Prev / next 2D mode'] },
       introTitle: 'Audio Visualizer',
       introDesc: 'Click a source below to start. Try Auto-VJ with your own track.<br><b>H</b> hides the UI · <b>?</b> shows all shortcuts.',
       by: 'by',
-      pause:'⏸ Pause', play:'▶ Play', vjOn:'✨ Stop VJ', vjOff:'✨ Auto-VJ',
+      pause:'⏸ Pause', play:'▶ Play', vjOn:'Stop VJ', vjOff:'Auto-VJ',
+      beatOn:'⏹ Stop', beatOff:'⏱ Beat',
       fsOn:'⛶ Exit', fsOff:'⛶ Full', midiOn:'On', midiOff:'Enable',
       t: {
         hueOff:'Hue cycle off', uiHidden:'UI hidden — press H to show', randomized:'🎲 Randomized',
@@ -154,7 +162,10 @@
         modelGone:'Model removed', modelCompressed:'Compressed glTF needs a decoder this page does not ship',
         modelExternal:'That .gltf points at separate files — export as .glb instead',
         framesWord:'frames', modelFrames:'Frames must all have the same vertex count',
-        tempoAuto:'Tempo: following the music', tempoTap:'Tempo', bpm:'BPM'
+        tempoAuto:'Tempo: following the music', tempoTap:'Tempo', bpm:'BPM',
+        sysFramed:'Embedded pages cannot capture system audio — open in its own window',
+        micFramed:'Embedded pages cannot use the microphone — open in its own window',
+        popBlocked:'This embed blocks new windows — open the page directly instead'
       }
     },
     no: {
@@ -193,25 +204,28 @@
         theme: { spectra:'Retro · rack-tuner', aero:'Aero · Vista-glass' }
       },
       grp: { Abstract:'Abstrakt', Models:'Modeller', Mine:'Egne' },
-      btn: { 'btn-mic':'🎤 Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
-        'btn-beat':'⏱ Takt', 'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
-        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp' },
+      btn: { 'btn-mic':'Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
+        'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
+        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp',
+        'btn-pop':'⧉ Eget vindu' },
       tip: { 'btn-mic':'Mikrofon', 'btn-sys':'System-/fanelyd — huk av «del lyd» i dialogen',
-        'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo',
+        'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo — trykk igjen for å stoppe',
         'btn-pause':'Pause animasjon og musikk (mellomrom)', 'btn-vj':'Slå Auto-VJ av/på (V)',
         'btn-fs':'Fullskjerm (F)', 'btn-hide':'Skjul hele grensesnittet (H)',
         'btn-keys':'Tastatursnarveier (?)', 'btn-panel':'Innstillinger (P)',
         'btn-reset':'Tilbakestill alle innstillinger',
         'btn-model':'Last inn din egen .obj-, .stl- eller .glb-modell',
         'btn-model-del':'Fjern denne modellen permanent',
-        'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.' },
+        'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.',
+        'btn-pop':'Åpne i eget vindu — kreves for mikrofon og systemlyd når siden er innebygd' },
       keys: { title:'Tastatursnarveier', hint:'Trykk ? eller Esc for å lukke',
         rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Slå Auto-VJ av/på','Tapp tempo',
               'Innstillinger','Bytt tema','Forrige / neste 3D-form','Forrige / neste 2D-modus'] },
       introTitle: 'Musikkvisualisering',
       introDesc: 'Veldig kul visualizer med ymse effekter og modeller. Gå til Bevegelse og FX nederst for effekter. Trykk system og del lyd.<br><b>H</b> Skjul UI · <b>?</b> Shortcuts.',
       by: 'av',
-      pause:'⏸ Pause', play:'▶ Spill', vjOn:'✨ Stopp VJ', vjOff:'✨ Auto-VJ',
+      pause:'⏸ Pause', play:'▶ Spill', vjOn:'Stopp VJ', vjOff:'Auto-VJ',
+      beatOn:'⏹ Stopp', beatOff:'⏱ Takt',
       fsOn:'⛶ Avslutt', fsOff:'⛶ Full', midiOn:'På', midiOff:'Slå på',
       t: {
         hueOff:'Fargesyklus av', uiHidden:'Grensesnitt skjult — trykk H for å vise',
@@ -227,7 +241,10 @@
         modelGone:'Modell fjernet', modelCompressed:'Komprimert glTF krever en dekoder denne siden ikke har',
         modelExternal:'Denne .gltf-filen peker på egne filer — eksporter som .glb i stedet',
         framesWord:'bilder', modelFrames:'Alle bildene må ha like mange hjørner',
-        tempoAuto:'Tempo: følger musikken', tempoTap:'Tempo', bpm:'BPM'
+        tempoAuto:'Tempo: følger musikken', tempoTap:'Tempo', bpm:'BPM',
+        sysFramed:'Innebygde sider får ikke ta opp systemlyd — åpne i eget vindu',
+        micFramed:'Innebygde sider får ikke bruke mikrofonen — åpne i eget vindu',
+        popBlocked:'Denne rammen blokkerer nye vinduer — åpne siden direkte i stedet'
       }
     }
   };
@@ -309,6 +326,7 @@
     };
     set('btn-pause', D.play, D.pause);
     set('btn-vj', D.vjOn, D.vjOff);
+    set('btn-beat', D.beatOn, D.beatOff);
     set('btn-midi', D.midiOn, D.midiOff);
     const fb = document.getElementById('btn-fs');
     if (fb) fb.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? D.fsOn : D.fsOff;
@@ -429,6 +447,17 @@
   function applyVolume() {
     if (gainNode) gainNode.gain.value = outputEnabled ? (+volumeEl.value / 100) : 0;
   }
+  // The demo sources have no natural end, so Beat is a toggle: the button that
+  // started it stops it. Every other source clears it on the way in, through
+  // stopAll, so the lamp can never lie about what is playing.
+  let srcKind = null;
+  function setSource(kind) {
+    srcKind = kind;
+    const b = document.getElementById('btn-beat');
+    b.classList.toggle('on', kind === 'beat');
+    b.textContent = (kind === 'beat') ? L().beatOn : L().beatOff;
+  }
+
   function stopAll() {
     if (source) { try { source.disconnect(); } catch (e) {} source = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
@@ -436,10 +465,27 @@
     if (oscNodes) { oscNodes.forEach(n => { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} }); oscNodes = null; }
     outputEnabled = false;
     applyVolume();
+    setSource(null);
   }
   function dismissIntro() { intro.classList.add('hidden'); requestWakeLock(); }
 
+  // A blocked permission and a cancelled picker both arrive as NotAllowedError,
+  // so the error alone cannot tell them apart. The block comes back immediately
+  // though, while a person needs time to reach the Cancel button — inside a
+  // frame, an instant rejection is the embed refusing, not the user declining.
+  function deniedByFrame(t0) { return framed && performance.now() - t0 < 250; }
+
+  // Leaving the frame is the whole fix: the same URL as a top-level document
+  // gets the permissions the embed withheld.
+  const popBtn = document.getElementById('btn-pop');
+  if (framed) popBtn.hidden = false;
+  popBtn.addEventListener('click', () => {
+    const w = window.open(location.href, '_blank');
+    if (w) w.opener = null; else toast(t('popBlocked'));   // sandboxed frames refuse popups
+  });
+
   async function startMic() {
+    const t0 = performance.now();
     try {
       ensureCtx(); stopAll();
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -450,6 +496,7 @@
       running = true; dismissIntro();
     } catch (e) {
       console.error('Mic failed:', e);
+      if (deniedByFrame(t0)) toast(t('micFramed'));
     }
   }
   async function startSystem() {
@@ -457,6 +504,7 @@
       toast(t('sysNo'));
       return;
     }
+    const t0 = performance.now();
     try {
       ensureCtx(); stopAll();
       // getDisplayMedia requires a video request; system/tab audio rides along.
@@ -479,7 +527,8 @@
       toast(t('sysOn'));
     } catch (e) {
       console.error('System audio failed:', e);
-      if (e && e.name !== 'NotAllowedError') toast(t('sysFail'));
+      if (deniedByFrame(t0)) toast(t('sysFramed'));
+      else if (e && e.name !== 'NotAllowedError') toast(t('sysFail'));
     }
   }
   function startFile(file) {
@@ -534,12 +583,16 @@
     oscNodes.push({ stop: () => clearInterval(kickInt), disconnect: () => {} });
     kick();
     running = true; dismissIntro();
+    setSource('beat');
   }
 
   document.getElementById('btn-mic').addEventListener('click', startMic);
   document.getElementById('btn-sys').addEventListener('click', startSystem);
   document.getElementById('btn-demo').addEventListener('click', startDemo);
-  document.getElementById('btn-beat').addEventListener('click', startBeatDemo);
+  document.getElementById('btn-beat').addEventListener('click', () => {
+    if (srcKind === 'beat') { stopAll(); running = false; }
+    else startBeatDemo();
+  });
   document.getElementById('btn-file').addEventListener('click', () => document.getElementById('file-input').click());
   document.getElementById('file-input').addEventListener('change', e => {
     if (e.target.files[0]) startFile(e.target.files[0]);
@@ -966,7 +1019,10 @@
   }
   const shapeOptions = ['sphere','cube','icosa','torus','wire','diamond','susan','discoman','danceman','blocks'];
   const mode2dOptions = ['ribbon','wave','orb','nebula','particles','mountains','tunnel','spectrum','eq','radial','scope','waterfall','grid','rings','stars','cosmos','ripples','corona','plasma','fireworks','drain','emdr'];
-  const symOptions = [1,1,1,2,3,4,6,8];
+  // 6- and 8-fold read as busy at projection distance, so nothing that picks
+  // for you — Auto-VJ or the randomize key — reaches for them. Both are still
+  // in the dropdowns when you want them.
+  const symOptions = [1,1,1,2,3,4];
   const layerOptions = ['auto','auto','both','2d-only'];
 
   function setVj(on) {
