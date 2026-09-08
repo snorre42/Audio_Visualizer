@@ -1,3 +1,4 @@
+// Bake that, blender filer lagt med
 // Build step for bundled models. Run manually when adding one:
 //   node bake-models.js
 // Parses each OBJ exactly as the app does, normalises it the same way, then
