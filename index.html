@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="spectra">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,28 @@
 <meta name="author" content="Snorre">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Saira+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Saira+Condensed:wght@300;400;500;600;700&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════
-     "SPECTRA-9" — dressed as the front panel of a 1978 rack
-     tuner. Brushed chassis, silkscreen labels, amber VFD
-     readouts, mint indicator lamps, real fader caps.
+     TWO WORLDS, ONE SET OF SLOTS.
+
+     Both skins fill the same semantic tokens, so every rule below
+     is written once and the theme supplies the material. Neither
+     is a tint of the other: Retro is opaque milled metal that
+     absorbs light and emits its own; AERO is wet glass that lets
+     the visuals through and reflects a sky that isn't there.
      ══════════════════════════════════════════════════════════ */
+
   :root {
+    /* Type scale — four steps, ~1.27 ratio. Nothing below the 11px floor. */
+    --t-label: 12px;
+    --t-read:  15px;
+    --t-head:  19px;
+    --t-title: 24px;
+  }
+
+  /* ── Retro — front panel of a 1978 rack tuner ─────────── */
+  [data-theme="spectra"] {
     --void:      #070503;
     --chassis-1: #1b1510;
     --chassis-2: #0e0a07;
@@ -37,19 +51,179 @@
     --silk: "Saira Condensed", "Oswald", "Arial Narrow", sans-serif;
     --seg:  "DotGothic16", "Courier New", monospace;
 
-    /* Type scale — four steps, ~1.27 ratio. Nothing below the 11px floor. */
-    --t-label: 12px;  /* silkscreen labels, buttons        */
-    --t-read:  15px;  /* VFD readouts, values, selects     */
-    --t-head:  19px;  /* section headers                   */
-    --t-title: 24px;  /* spec-plate title                  */
-
-    /* Contact shadows — tight and neutral, the way real hardware sits. */
     --lift-sm: 0 1px 2px rgba(0,0,0,0.6);
     --lift-md: 0 1px 2px rgba(0,0,0,0.65), 0 3px 7px rgba(0,0,0,0.5);
     --lift-lg: 0 1px 3px rgba(0,0,0,0.75), 0 5px 11px rgba(0,0,0,0.6);
 
     --brushed: linear-gradient(180deg, var(--chassis-3), var(--chassis-1) 55%, var(--chassis-2));
+
+    /* structural slots */
+    --r-btn: 2px;
+    --r-panel: 4px;
+    --r-chip: 2px;
+    --blur: none;
+    --emboss: none;
+    --case-tex: repeating-linear-gradient(0deg, rgba(255,167,36,0.030) 0 1px, transparent 1px 4px);
+    --case-fill: linear-gradient(180deg, #16110c, #0a0705 70%);
+    --plate-fill: linear-gradient(180deg, #1b1510, #0a0705);
+    --track-fill: linear-gradient(180deg, #000, #211a13);
+    --thumb-fill: linear-gradient(180deg, #6d5b45 0 46%, #241c14 46% 54%, #6d5b45 54% 100%);
+    --btn-face: linear-gradient(180deg, #2a211a, #140f0b 62%, #0b0806);
+    --btn-face-hi: linear-gradient(180deg, #35291f, #1a130d 62%, #0d0906);
+    --on-face: linear-gradient(180deg, #7df0d6, var(--lamp) 55%, #1d7d68);
+    --on-ink: #071a15;
+    --r-bar: 3px;
+    --case-edge: #000;
+    --btn-edge: #000;
+    --btn-edge-top: rgba(255,214,160,0.16);
+    --on-edge: #b8ffee;
+    --field-bg: #0b0806;
+    --sel-ink: #1a0e00;
+    /* emissive: phosphor throws light */
+    --glow-read: 0 0 10px var(--vfd-ghost);
+    --glow-head: 0 0 12px var(--vfd-ghost);
   }
+
+  /* ── AERO — Vista-era glass: wet gloss, aqua light, green go ── */
+  [data-theme="aero"] {
+    --void:      #04121c;
+    --chassis-1: rgba(22, 84, 136, 0.78);
+    --chassis-2: rgba(9, 46, 82, 0.80);
+    --chassis-3: rgba(38, 116, 178, 0.74);
+    --etch:      rgba(150, 214, 255, 0.26);
+    --bevel:     rgba(198, 236, 255, 0.72);
+
+    /* Dark harbour glass, lit from above. Alpha never drops below ~0.74:
+       these panels float over a stage whose colour the user controls, and
+       glass thin enough to read the visuals through is glass too thin to
+       read text on. Verified against a black stage AND a white one. */
+    --vfd:       #a5e4ff;   /* readout / accent ink */
+    --vfd-hi:    #ffffff;   /* hover, brightest */
+    --vfd-dim:   rgba(158, 214, 248, 0.88);
+    --vfd-ghost: rgba(90, 200, 255, 0.50);   /* halo + focus only, never text */
+
+    --lamp:      #7ed321;      /* Vista go-green */
+    --lamp-dim:  rgba(126, 211, 33, 0.55);
+
+    --ink:       #f0faff;
+    --ink-dim:   rgba(216, 240, 255, 0.90);
+
+    --silk: "Titillium Web", "Segoe UI", "Frutiger", sans-serif;
+    --seg:  "Titillium Web", "Segoe UI", sans-serif;
+
+    /* Glass casts a cool, deep shadow and takes a sky-rim on its top edge. */
+    --lift-sm: 0 1px 2px rgba(0, 16, 32, 0.55);
+    --lift-md: 0 2px 5px rgba(0, 16, 32, 0.50), 0 7px 16px rgba(0, 20, 40, 0.45);
+    --lift-lg: 0 3px 9px rgba(0, 16, 32, 0.55), 0 16px 38px rgba(0, 20, 40, 0.50);
+
+    --brushed: linear-gradient(180deg,
+                 rgba(46, 130, 192, 0.80), rgba(20, 82, 136, 0.78) 47%,
+                 rgba(8, 44, 80, 0.82) 48%, rgba(24, 92, 148, 0.78));
+
+    --r-btn: 999px;
+    --r-panel: 12px;
+    --r-chip: 6px;
+    --blur: blur(26px) saturate(1.9);
+    --emboss: 0 1px 1px rgba(0, 22, 44, 0.6);
+    /* the gloss break: specular sheet across the top, hard cut at 47% */
+    --case-tex: linear-gradient(180deg,
+                  rgba(190, 232, 255, 0.30) 0%, rgba(150, 210, 250, 0.10) 46%,
+                  rgba(255, 255, 255, 0.00) 47%, rgba(120, 190, 240, 0.07) 100%);
+    --case-fill: linear-gradient(180deg,
+                   rgba(30, 100, 158, 0.78), rgba(12, 56, 96, 0.80) 55%,
+                   rgba(8, 40, 74, 0.82));
+    --plate-fill: linear-gradient(180deg,
+                    rgba(40, 120, 180, 0.78), rgba(16, 70, 116, 0.80) 47%,
+                    rgba(9, 46, 84, 0.84) 48%, rgba(26, 96, 152, 0.78));
+    --track-fill: linear-gradient(180deg, rgba(3, 24, 44, 0.85), rgba(30, 96, 148, 0.7));
+    --thumb-fill: radial-gradient(circle at 38% 26%, #ffffff, #a9e2ff 40%, #2ba0e0 76%, #0a5c93);
+    /* Keys carry the labels, so they run denser than the panels: a bright
+       stage behind thin glass was washing the text to 3.5:1. */
+    --btn-face: linear-gradient(180deg,
+                  rgba(88, 168, 224, 0.80), rgba(38, 116, 178, 0.82) 47%,
+                  rgba(14, 62, 106, 0.88) 48%, rgba(46, 128, 190, 0.82));
+    --btn-face-hi: linear-gradient(180deg,
+                     rgba(140, 208, 250, 0.88), rgba(74, 158, 218, 0.86) 47%,
+                     rgba(24, 86, 140, 0.90) 48%, rgba(88, 172, 230, 0.86));
+    /* The go-lamp key is opaque: a green that shifts with the stage behind
+       it stops reading as a lit indicator. */
+    --on-face: linear-gradient(180deg,
+                 #cdf58a, #9ad633 47%, #6fb015 48%, #ade34f);
+    --on-ink: #14300a;
+    --r-bar: 28px;
+    --case-edge: rgba(8, 34, 60, 0.75);
+    --btn-edge: rgba(6, 32, 58, 0.70);
+    --btn-edge-top: rgba(198, 236, 255, 0.80);
+    --on-edge: rgba(226, 255, 178, 0.85);
+    --field-bg: rgba(4, 28, 52, 0.62);
+    --sel-ink: #052a44;
+    /* glass doesn't emit — it catches light. Shadow, never halo. */
+    --glow-read: var(--emboss);
+    --glow-head: var(--emboss);
+    --lamp-off-fill: radial-gradient(circle at 36% 28%, rgba(150,200,235,0.55), rgba(10,40,70,0.9) 62%);
+    --lamp-on-fill: radial-gradient(circle at 36% 28%, #f6ffe4, #a9e952 44%, #4f9c0a);
+  }
+
+  /* ── AERO materials ───────────────────────────────────────────
+     Dark glass lit from above: a sky-rim catches the top edge, the
+     interior deepens toward the bottom, and the accent that glowed
+     in Retro becomes a specular highlight here. */
+  [data-theme="aero"] #bottom-bar {
+    box-shadow:
+      inset 0 1px 0 rgba(198,236,255,0.62),
+      inset 0 -12px 22px rgba(0,18,38,0.42),
+      var(--lift-md);
+  }
+  [data-theme="aero"] #panel,
+  [data-theme="aero"] #intro,
+  [data-theme="aero"] #toast,
+  [data-theme="aero"] #keys {
+    box-shadow:
+      inset 0 1px 0 rgba(198,236,255,0.60),
+      inset 0 -20px 40px rgba(0,16,34,0.30),
+      var(--lift-lg);
+  }
+  [data-theme="aero"] #bottom-bar button,
+  [data-theme="aero"] #panel button {
+    box-shadow:
+      inset 0 1px 0 rgba(206,240,255,0.72),
+      inset 0 -7px 11px rgba(0,20,42,0.35),
+      var(--lift-sm);
+  }
+  /* The transport's lead key, straight off the WMP fascia. */
+  [data-theme="aero"] #bottom-bar button.primary {
+    background: linear-gradient(180deg,
+      rgba(150,222,255,0.92), rgba(58,166,232,0.90) 47%,
+      rgba(12,104,170,0.94) 48%, rgba(86,190,242,0.92));
+    color: #012338;
+    border-color: rgba(4,40,70,0.85);
+    border-top-color: rgba(226,248,255,0.95);
+    box-shadow:
+      inset 0 1px 0 rgba(240,252,255,0.95),
+      0 0 20px rgba(0,168,255,0.55),
+      var(--lift-sm);
+  }
+  [data-theme="aero"] #panel h3 {
+    font-weight: 700;
+    letter-spacing: 0.005em;
+  }
+  [data-theme="aero"] #intro { border-left: none; }
+  [data-theme="aero"] #vj-tag {
+    background: linear-gradient(180deg,
+      rgba(150,222,255,0.94), rgba(58,166,232,0.92) 47%,
+      rgba(12,104,170,0.95) 48%, rgba(86,190,242,0.94));
+    color: #012338;
+    border-color: rgba(4,40,70,0.85);
+    border-top-color: rgba(226,248,255,0.95);
+    box-shadow: inset 0 1px 0 rgba(240,252,255,0.95), 0 0 20px rgba(0,168,255,0.5);
+  }
+  [data-theme="aero"] #fps-tag { color: rgba(214,240,255,0.9); text-shadow: 0 1px 3px rgba(0,30,50,0.9); }
+  [data-theme="aero"] #credit { color: rgba(214,240,255,0.85); text-shadow: 0 1px 3px rgba(0,30,50,0.9); }
+  [data-theme="aero"] #credit .name { color: #bfe9ff; }
+  [data-theme="aero"] #panel::-webkit-scrollbar-track { background: rgba(2,20,38,0.55); }
+  [data-theme="aero"] #panel input[type="color"] { box-shadow: inset 0 1px 3px rgba(0,16,34,0.6); }
+
+  @keyframes glassIn { from { opacity: 0; translate: 14px 0; filter: blur(7px); } }
 
   * { box-sizing: border-box; }
   html, body {
@@ -60,6 +234,18 @@
     overflow: hidden;
     user-select: none;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Browser surfaces the design still owns */
+  ::selection { background: var(--vfd); color: var(--sel-ink); }
+
+  /* One focus treatment, everywhere. This UI is keyboard-driven. */
+  #bottom-bar button:focus-visible,
+  #panel button:focus-visible,
+  #panel select:focus-visible,
+  #panel input:focus-visible {
+    outline: 2px solid var(--vfd);
+    outline-offset: 2px;
   }
 
   @keyframes riseIn { from { opacity: 0; translate: 0 18px; } }
@@ -96,20 +282,30 @@
     transform: translateX(-50%);
     z-index: 30;
     display: flex; gap: 3px;
+    /* Always one row: a wrapping transport strip grows upward into the
+       panel. Too narrow to fit means swipe, never restack. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    max-width: calc(100vw - 22px);
     padding: 5px 6px;
     background: var(--brushed);
-    border: 1px solid #000;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--case-edge, #000);
     border-top-color: var(--bevel);
-    border-radius: 3px;
+    border-radius: var(--r-bar, 3px);
     box-shadow:
       inset 0 1px 0 rgba(255,226,190,0.12),
-      inset 0 -8px 16px rgba(0,0,0,0.55),
+      inset 0 -5px 10px rgba(0,0,0,0.6),
       var(--lift-md);
     opacity: 0.45;
     transition: opacity 260ms;
     animation: riseIn 720ms cubic-bezier(.2,.85,.25,1) 400ms backwards;
   }
   body:hover #bottom-bar { opacity: 1; }
+  #bottom-bar::-webkit-scrollbar { display: none; }
   #bottom-bar button {
     font-family: var(--silk);
     font-size: var(--t-label);
@@ -117,19 +313,21 @@
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--ink-dim);
-    background: linear-gradient(180deg, #2a211a, #140f0b 62%, #0b0806);
-    border: 1px solid #000;
-    border-top-color: rgba(255,214,160,0.16);
-    border-radius: 2px;
+    background: var(--btn-face);
+    border: 1px solid var(--btn-edge, #000);
+    border-top-color: var(--btn-edge-top, rgba(255,214,160,0.16));
+    border-radius: var(--r-btn);
     padding: 8px 14px 7px;
     cursor: pointer;
     white-space: nowrap;
+    flex: 0 0 auto;
+    text-shadow: var(--emboss);
     box-shadow: inset 0 1px 0 rgba(255,226,190,0.09), var(--lift-sm);
     transition: color 140ms, box-shadow 160ms, background 160ms;
   }
   #bottom-bar button:hover {
     color: var(--vfd-hi);
-    background: linear-gradient(180deg, #35291f, #1a130d 62%, #0d0906);
+    background: var(--btn-face-hi);
   }
   #bottom-bar button:active {
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.85);
@@ -141,9 +339,9 @@
   }
   #bottom-bar button.primary:hover { color: var(--vfd-hi); }
   #bottom-bar button.on {
-    color: #071a15;
-    background: linear-gradient(180deg, #7df0d6, var(--lamp) 55%, #1d7d68);
-    border-top-color: #b8ffee;
+    color: var(--on-ink);
+    background: var(--on-face);
+    border-top-color: var(--on-edge, #b8ffee);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), var(--lift-sm);
   }
 
@@ -158,13 +356,12 @@
     z-index: 25;
     font-size: 12px;
     color: var(--vfd);
-    background:
-      repeating-linear-gradient(0deg, rgba(255,167,36,0.030) 0 1px, transparent 1px 4px),
-      radial-gradient(120% 80% at 50% 0%, rgba(255,167,36,0.09), transparent 62%),
-      linear-gradient(180deg, #16110c, #0a0705 70%);
-    border: 1px solid #000;
+    background: var(--case-tex), var(--case-fill);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--case-edge, #000);
     border-top-color: var(--bevel);
-    border-radius: 4px;
+    border-radius: var(--r-panel);
     box-shadow:
       inset 0 1px 0 rgba(255,226,190,0.13),
       var(--lift-lg);
@@ -173,7 +370,11 @@
     scrollbar-width: thin;
     scrollbar-color: var(--vfd-dim) transparent;
   }
-  #panel.open { transform: translateX(0); animation: vfdOn 620ms steps(1, end) 220ms backwards; }
+  #panel.open { transform: translateX(0); }
+  /* Each world arrives the way its material would: a display striking,
+     or a sheet of glass sliding into focus. */
+  [data-theme="spectra"] #panel.open { animation: vfdOn 620ms steps(1, end) 220ms backwards; }
+  [data-theme="aero"]    #panel.open { animation: glassIn 520ms cubic-bezier(.2,.9,.25,1) 120ms backwards; }
   #panel::-webkit-scrollbar { width: 7px; }
   #panel::-webkit-scrollbar-track { background: #000; }
   #panel::-webkit-scrollbar-thumb { background: var(--vfd-dim); border-radius: 0; }
@@ -184,7 +385,7 @@
     font-size: var(--t-head);
     letter-spacing: 0.06em;
     color: var(--vfd);
-    text-shadow: 0 0 12px var(--vfd-ghost);  /* emissive: this IS the display */
+    text-shadow: var(--glow-head);
     font-weight: 400;
     cursor: pointer;
     user-select: none;
@@ -221,18 +422,23 @@
     color: var(--ink-dim);
     min-width: 66px;
   }
+  /* Lamps sit in their own column at the row's end — the way indicators
+     run down the right of a real fascia. Faders then start on one axis
+     no matter how long the label runs. */
+  #panel .row input[type="checkbox"] { order: 3; margin-left: auto; }
 
   /* Selects — chassis switch */
   #panel select {
     flex: 1; min-width: 0;
     font-family: var(--silk);
     font-size: var(--t-label);
-    letter-spacing: 0.05em;
+    /* No label tracking here: option text is mixed-case prose
+       ("Sphere (blob)", "Down the drain"), not a silkscreen label. */
     color: var(--vfd);
-    background-color: #0b0806;
+    background-color: var(--field-bg, #0b0806);
     border: 1px solid #000;
     border-top-color: rgba(255,214,160,0.14);
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     padding: 5px 20px 5px 8px;
     appearance: none;
     -webkit-appearance: none;
@@ -245,9 +451,11 @@
   }
   #panel select:hover { color: var(--vfd-hi); border-top-color: var(--vfd-dim); }
   #panel select:focus { outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.7), 0 0 0 1px var(--vfd-dim); }
-  #panel select option { background: #0b0806; color: var(--ink); font-size: var(--t-label); }
+  #panel select option { background: var(--field-bg, #0b0806); color: var(--ink); font-size: var(--t-label); }
+  /* No own background: group headers read by colour, face and tracking.
+     A native optgroup can't be padded, so a filled one always lands its
+     label flush against the fill. */
   #panel select optgroup {
-    background: #050403;
     color: var(--vfd-dim);
     font-family: var(--seg);
     font-size: var(--t-label);
@@ -264,7 +472,7 @@
   }
   #panel input[type="range"]::-webkit-slider-runnable-track {
     height: 4px;
-    background: linear-gradient(180deg, #000, #211a13);
+    background: var(--track-fill);
     box-shadow: inset 0 1px 3px #000, 0 1px 0 rgba(255,214,160,0.10);
     border-radius: 1px;
   }
@@ -272,10 +480,10 @@
     -webkit-appearance: none;
     width: 11px; height: 18px;
     margin-top: -7px;
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     border: 1px solid #000;
     background:
-      linear-gradient(180deg, #6d5b45 0 46%, #241c14 46% 54%, #6d5b45 54% 100%);
+      var(--thumb-fill);
     box-shadow: var(--lift-sm);
     transition: background 160ms, border-color 160ms;
   }
@@ -286,31 +494,39 @@
   }
   #panel input[type="range"]::-moz-range-track {
     height: 4px; border-radius: 1px;
-    background: linear-gradient(180deg, #000, #211a13);
+    background: var(--track-fill);
     box-shadow: inset 0 1px 3px #000;
   }
   #panel input[type="range"]::-moz-range-thumb {
     width: 9px; height: 16px;
-    border-radius: 2px; border: 1px solid #000;
-    background: linear-gradient(180deg, #6d5b45 0 46%, #241c14 46% 54%, #6d5b45 54% 100%);
+    border-radius: var(--r-chip); border: 1px solid #000;
+    background: var(--thumb-fill);
     box-shadow: var(--lift-sm);
   }
 
   /* Indicator lamps */
   #panel input[type="checkbox"] {
     -webkit-appearance: none; appearance: none;
-    width: 13px; height: 13px;
+    position: relative;
+    width: 14px; height: 14px;
     flex: 0 0 auto;
     border-radius: 50%;
     border: 1px solid #000;
-    background: radial-gradient(circle at 34% 30%, #2c2219, #0a0705);
+    background: var(--lamp-off-fill, radial-gradient(circle at 34% 30%, #2c2219, #0a0705));
     box-shadow: inset 0 1px 1px rgba(255,226,190,0.10);
     cursor: pointer;
     transition: background 180ms, box-shadow 180ms;
   }
+  /* Lamp stays jewel-small; its hit area meets the 24px target minimum. */
+  #panel input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+  }
   /* The one lamp that genuinely emits — keep its halo. */
   #panel input[type="checkbox"]:checked {
-    background: radial-gradient(circle at 34% 30%, #c8fff0, var(--lamp) 55%, #166655);
+    background: var(--lamp-on-fill, radial-gradient(circle at 34% 30%, #c8fff0, var(--lamp) 55%, #166655));
     box-shadow: 0 0 9px var(--lamp-dim), inset 0 1px 1px rgba(255,255,255,0.55);
   }
 
@@ -318,7 +534,7 @@
     width: 32px; height: 23px;
     border: 1px solid #000;
     border-top-color: rgba(255,214,160,0.2);
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     background: transparent;
     cursor: pointer;
     padding: 0;
@@ -332,22 +548,22 @@
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--ink-dim);
-    background: linear-gradient(180deg, #2a211a, #120d09);
+    background: var(--btn-face);
     border: 1px solid #000;
     border-top-color: rgba(255,214,160,0.16);
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     padding: 6px 13px;
     cursor: pointer;
     flex: 0 0 auto;
     box-shadow: inset 0 1px 0 rgba(255,226,190,0.08);
     transition: color 140ms, background 150ms;
   }
-  #panel button:hover { color: var(--vfd-hi); background: linear-gradient(180deg, #35291f, #1a130d); }
+  #panel button:hover { color: var(--vfd-hi); background: var(--btn-face-hi); }
   #panel button:active { box-shadow: inset 0 2px 5px rgba(0,0,0,0.85); }
   #panel button.on {
-    color: #071a15;
-    background: linear-gradient(180deg, #7df0d6, var(--lamp) 55%, #1d7d68);
-    border-top-color: #b8ffee;
+    color: var(--on-ink);
+    background: var(--on-face);
+    border-top-color: var(--on-edge, #b8ffee);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), var(--lift-sm);
   }
 
@@ -356,8 +572,8 @@
     margin-top: 16px;
     padding: 10px;
     letter-spacing: 0.16em;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #241c14, #0d0906);
+    border-radius: var(--r-chip);
+    background: var(--btn-face);
   }
 
   /* Readout — emissive by design. */
@@ -365,7 +581,7 @@
     font-family: var(--seg);
     font-size: var(--t-read);
     color: var(--vfd);
-    text-shadow: 0 0 10px var(--vfd-ghost);
+    text-shadow: var(--glow-read);
     min-width: 30px;
     text-align: right;
     font-variant-numeric: tabular-nums;
@@ -379,7 +595,7 @@
     padding: 13px 16px 14px;
     max-width: 262px;
     font-size: var(--t-label);
-    background: linear-gradient(180deg, #1b1510, #0a0705);
+    background: var(--plate-fill);
     border: 1px solid #000;
     border-top-color: var(--bevel);
     border-radius: 3px;
@@ -394,7 +610,7 @@
     letter-spacing: 0.04em;
     line-height: 1.1;
     color: var(--vfd);
-    text-shadow: 0 0 14px var(--vfd-ghost);  /* emissive readout */
+    text-shadow: var(--glow-read);  /* emissive readout */
     margin-bottom: 9px;
   }
   #intro .desc {
@@ -421,11 +637,25 @@
     z-index: 20;
     opacity: 0.75;
   }
+  #bpm-tag {
+    position: fixed;
+    bottom: 76px; left: 34px;
+    font-family: var(--seg);
+    color: rgba(255, 183, 84, 0.82);  /* 4.5:1 on the black stage */
+    font-size: var(--t-label);
+    letter-spacing: 0.08em;
+    z-index: 20;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 200ms;
+  }
+  /* Unlocked tempo is a real state, not an error: it recedes, it does not shout. */
+  #bpm-tag.idle { opacity: 0.4; }
+  #bpm-tag.tapped { color: var(--lamp); }   /* tapped tempo reads as a held state */
   #fps-tag {
     position: fixed;
     bottom: 76px; right: 18px;
     font-family: var(--seg);
-    color: var(--vfd-dim);
+    color: rgba(255, 183, 84, 0.82);  /* 4.5:1 on the black stage */
     font-size: var(--t-label);
     letter-spacing: 0.08em;
     z-index: 20;
@@ -460,7 +690,7 @@
     font-size: var(--t-label);
     border: 1px solid #000;
     border-top-color: #ffe0b0;
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     display: none;
     letter-spacing: 0.2em;
     z-index: 28;
@@ -475,9 +705,21 @@
   body.ui-hidden #credit,
   body.ui-hidden #beat-pulse,
   body.ui-hidden #fps-tag,
+  body.ui-hidden #bpm-tag,
   body.ui-hidden #keys,
   body.ui-hidden #vj-tag { opacity: 0 !important; pointer-events: none; }
   body.ui-hidden { cursor: none; }
+
+  /* Beat flash. Sits over the stage but under the chrome, never takes
+     pointer events, and is capped well below full white on purpose. */
+  #strobe-plate {
+    position: fixed; inset: 0;
+    z-index: 14;
+    pointer-events: none;
+    opacity: 0;
+    background: #ffffff;
+    mix-blend-mode: screen;
+  }
 
   /* ── Readout toast ──────────────────────────────────────── */
   #toast {
@@ -489,11 +731,11 @@
     font-size: var(--t-read);
     letter-spacing: 0.06em;
     color: var(--vfd);
-    text-shadow: 0 0 10px var(--vfd-ghost);  /* emissive readout */
-    background: linear-gradient(180deg, #1b1510, #0a0705);
+    text-shadow: var(--glow-read);  /* emissive readout */
+    background: var(--plate-fill);
     border: 1px solid #000;
     border-top-color: var(--bevel);
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     padding: 9px 18px 8px;
     z-index: 40;
     opacity: 0;
@@ -532,7 +774,7 @@
     font-size: var(--t-head);
     letter-spacing: 0.06em;
     color: var(--vfd);
-    text-shadow: 0 0 12px var(--vfd-ghost);  /* emissive readout */
+    text-shadow: var(--glow-read);  /* emissive readout */
     font-weight: 400;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--etch);
@@ -554,10 +796,10 @@
   #keys kbd {
     font-family: var(--seg);
     color: var(--vfd);
-    background: linear-gradient(180deg, #2a211a, #0d0906);
+    background: var(--btn-face);
     border: 1px solid #000;
     border-top-color: rgba(255,214,160,0.2);
-    border-radius: 2px;
+    border-radius: var(--r-chip);
     padding: 3px 9px 2px;
     font-size: var(--t-label);
     letter-spacing: 0.06em;
@@ -577,16 +819,62 @@
     text-align: center;
   }
 
-  /* Mobile tweaks */
-  @media (max-width: 600px) {
-    #panel { right: 7px; left: 7px; width: auto; }
-    #bottom-bar { gap: 2px; padding: 4px; }
-    #bottom-bar button { padding: 6px 8px; font-size: 11px; letter-spacing: 0.04em; }
+  /* Narrow: the panel becomes a bottom sheet so the visuals it controls
+     stay on screen, and the spec plate no longer lands on top of it. */
+  @media (max-width: 620px) {
+    #panel {
+      right: 7px; left: 7px; width: auto;
+      top: auto; height: 54vh; bottom: 68px;
+    }
+    #bottom-bar {
+      gap: 2px; padding: 4px; bottom: 10px;
+      left: 8px; right: 8px;
+      transform: none;
+      max-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    #bottom-bar button { padding: 7px 9px; letter-spacing: 0.04em; }
     #intro { max-width: calc(100vw - 28px); }
+    /* The plate would sit on the byline; yield until the plate dismisses. */
+    #intro:not(.hidden) ~ #credit { opacity: 0; }
+    /* Status moves up top, docked under the credit line rather than over it. */
+    #beat-pulse { bottom: auto; top: 41px; left: auto; right: 56px; }
+    #fps-tag { bottom: auto; top: 38px; right: 14px; }
+    #bpm-tag { bottom: auto; top: 38px; left: auto; right: 70px; }
+  }
+
+  /* Respect reduced-motion: kill the power-up flicker and the blink,
+     keep state changes instant rather than animated. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    #vj-tag { opacity: 1 !important; }
   }
 </style>
 </head>
 <body>
+<!--
+THESIS: Two finished instrument fascias, switchable mid-set, refusing the
+  light/dark toggle every themed app ships. A skin here is a material, not a
+  brightness.
+OWN-WORLD: AERO — Vista-era wet glass. Translucent white-to-aqua panels with a
+  hard specular break at 47%, backdrop blur, white rim light on every top edge,
+  pill geometry, Titillium Web, go-green lamps, and bubbles drifting up behind
+  the chrome. Retro — opaque milled metal, amber VFD, DotGothic16.
+STORY: The visitor sees the visualizer wearing a skin they recognise from
+  Windows Media Player, presses T, and watches the same instrument become a
+  1978 rack tuner without a control moving.
+FIRST VIEWPORT: Visuals full-bleed. Spec plate top-left, glass control panel
+  right (open), transport strip bottom-centre; bubbles rise behind all of it.
+FORM: Brief-pinned by the user (Frutiger Aero / WMP), which beats the roll —
+  concept-seed not run, disclosed.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, DESIGN.md, and every shipping raster carrying its
+  provenance
+-->
   <div id="viz-wrap">
     <canvas id="viz-3d"></canvas>
     <canvas id="viz-bloom"></canvas>
@@ -600,6 +888,7 @@
   </div>
 
   <div id="vj-tag">AUTO-VJ</div>
+  <div id="strobe-plate" aria-hidden="true"></div>
   <div id="toast"></div>
 
   <div id="keys">
@@ -609,12 +898,15 @@
     <div class="k"><span>Fullscreen</span><kbd>F</kbd></div>
     <div class="k"><span>Randomize look</span><kbd>R</kbd></div>
     <div class="k"><span>Toggle Auto-VJ</span><kbd>V</kbd></div>
+    <div class="k"><span>Tap tempo</span><kbd>B</kbd></div>
     <div class="k"><span>Settings panel</span><kbd>P</kbd></div>
+    <div class="k"><span>Switch skin</span><kbd>T</kbd></div>
     <div class="k"><span>Prev / next 3D shape</span><kbd>← →</kbd></div>
     <div class="k"><span>Prev / next 2D mode</span><kbd>↑ ↓</kbd></div>
     <div class="hint">Press ? or Esc to close</div>
   </div>
   <div id="beat-pulse"></div>
+  <div id="bpm-tag" class="idle">— BPM</div>
   <div id="fps-tag">—</div>
   <div id="credit"><span class="by">by</span><span class="name">Snorre</span></div>
 
@@ -634,6 +926,22 @@
   </div>
 
   <div id="panel" class="open">
+    <h3>Appearance</h3>
+    <div class="row">
+      <label>Language</label>
+      <select id="lang">
+        <option value="no" selected>Norsk</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Skin</label>
+      <select id="theme">
+        <option value="spectra" selected>Retro · rack tuner</option>
+        <option value="aero">Aero · Vista glass</option>
+      </select>
+    </div>
+
     <h3>Playback</h3>
     <div class="row">
       <label>Volume</label>
@@ -665,25 +973,30 @@
       <select id="shape3d">
         <optgroup label="Abstract">
           <option value="sphere" selected>Sphere (blob)</option>
+          <option value="cube">Cube</option>
           <option value="icosa">Icosahedron</option>
           <option value="torus">Torus knot</option>
           <option value="wire">Wireframe globe</option>
           <option value="diamond">Diamond</option>
         </optgroup>
-        <optgroup label="Creatures">
-          <option value="frog">Frog</option>
-          <option value="cow">Cow</option>
-          <option value="cat">Cat</option>
-        </optgroup>
-        <optgroup label="Objects">
-          <option value="mushroom">Mushroom</option>
-          <option value="heart">Heart</option>
-          <option value="pumpkin">Pumpkin</option>
-          <option value="snowman">Snowman</option>
-          <option value="robot">Robot</option>
-          <option value="rocket">Rocket</option>
+        <optgroup label="Models">
+          <option value="susan">Susan</option>
+          <option value="discoman">Discoman</option>
+          <option value="danceman">Danceman</option>
+          <option value="blocks">Blocks</option>
         </optgroup>
       </select>
+    </div>
+    <div class="row">
+      <label>Own model</label>
+      <button id="btn-model">Upload</button>
+      <button id="btn-model-del" style="display: none;">Delete</button>
+      <input type="file" id="model-input" accept=".obj,.stl,.glb,.gltf" multiple style="display: none;" />
+    </div>
+    <div class="row">
+      <label>Anim speed</label>
+      <input type="range" id="anim" min="0" max="300" value="100">
+      <span id="anim-val" class="slider-val">100</span>
     </div>
     <div class="row">
       <label>2D mode</label>
@@ -707,12 +1020,13 @@
         <option value="plasma">Plasma</option>
         <option value="fireworks">Fireworks</option>
         <option value="drain">Down the drain</option>
+        <option value="emdr">EMDR light</option>
         <option value="stars">Starfield</option>
         <option value="cosmos">Cosmos</option>
       </select>
     </div>
     <div class="row">
-      <label>Symmetry</label>
+      <label>2D symmetry</label>
       <select id="symmetry">
         <option value="1" selected>None</option>
         <option value="2">Mirror</option>
@@ -723,8 +1037,25 @@
       </select>
     </div>
     <div class="row">
+      <label>3D symmetry</label>
+      <select id="symmetry3d">
+        <option value="1" selected>None</option>
+        <option value="2">Mirror</option>
+        <option value="3">3-fold</option>
+        <option value="4">4-fold</option>
+        <option value="6">6-fold</option>
+        <option value="8">8-fold</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Sym distance</label>
+      <input type="range" id="symdist" min="0" max="100" value="0">
+      <span id="symdist-val" class="slider-val">0</span>
+    </div>
+    <div class="row">
       <label>Quality</label>
       <select id="quality">
+        <option value="0.6">Low</option>
         <option value="1">Standard</option>
         <option value="1.5" selected>High</option>
         <option value="2">Ultra</option>
@@ -764,6 +1095,15 @@
       <input type="range" id="vj-speed" min="10" max="300" value="100">
       <span id="vj-speed-val" class="slider-val">100</span>
     </div>
+    <div class="row">
+      <label>Bar sync</label>
+      <input type="checkbox" id="vj-sync" checked>
+    </div>
+    <div class="row">
+      <label>Tempo</label>
+      <button id="btn-tap" title="Tap the beat to set the tempo (B). One tap after a pause returns to automatic.">Tap</button>
+      <span id="tempo-val" class="slider-val">—</span>
+    </div>
 
     <h3>Reactivity</h3>
     <div class="row">
@@ -790,6 +1130,38 @@
       <label>Smooth</label>
       <input type="range" id="smooth" min="0" max="100" value="82">
       <span id="smooth-val" class="slider-val">82</span>
+    </div>
+
+    <h3>Band routing</h3>
+    <div class="row">
+      <label>Pulse</label>
+      <select id="route-pulse">
+        <option value="bass" selected>Bass</option>
+        <option value="mid">Mid</option>
+        <option value="high">Treble</option>
+        <option value="beat">Beat</option>
+        <option value="mix">Full mix</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Texture</label>
+      <select id="route-texture">
+        <option value="bass">Bass</option>
+        <option value="mid" selected>Mid</option>
+        <option value="high">Treble</option>
+        <option value="beat">Beat</option>
+        <option value="mix">Full mix</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>Sparkle</label>
+      <select id="route-sparkle">
+        <option value="bass">Bass</option>
+        <option value="mid">Mid</option>
+        <option value="high" selected>Treble</option>
+        <option value="beat">Beat</option>
+        <option value="mix">Full mix</option>
+      </select>
     </div>
 
     <h3>2D Effects</h3>
@@ -859,6 +1231,17 @@
       <span id="fog-val" class="slider-val">50</span>
     </div>
     <div class="row">
+      <label>Echo</label>
+      <input type="checkbox" id="echo-on">
+      <input type="range" id="echo" min="0" max="100" value="50">
+      <span id="echo-val" class="slider-val">50</span>
+    </div>
+    <div class="row">
+      <label>Strobe</label>
+      <input type="range" id="strobe" min="0" max="100" value="0">
+      <span id="strobe-val" class="slider-val">0</span>
+    </div>
+    <div class="row">
       <label>MIDI</label>
       <button id="btn-midi">Enable</button>
       <span id="midi-status" class="slider-val">—</span>
@@ -868,6 +1251,7 @@
   </div>
 
   <script src="three.min.js"></script>
+  <script src="models.js"></script>
   <script src="visualizer.js"></script>
 </body>
 </html>

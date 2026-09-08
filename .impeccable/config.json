@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-08-25T10:43:40.198Z",
+        "reason": "Pinned brief: SPECTRA-9 is a 1978 VFD rack tuner. Amber/mint phosphor emission is the concept, not decoration; glow is confined to readouts and indicator lamps while all chrome uses neutral contact shadows (--lift-*). Scoped to this file only. Rule stays live everywhere else."
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-08-25T10:58:16.744Z",
+        "reason": "Pinned brief: the horizontal stripe on #panel and #keys is VFD phosphor scanline glass, the core material of the SPECTRA-9 rack-tuner concept, not surface decoration. The genuinely decorative stripe (brushed-metal striping on the transport bar) was removed rather than suppressed. Scoped to this file; rule stays live elsewhere."
+      }
+    ]
+  }
+}

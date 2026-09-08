@@ -17,7 +17,7 @@
   const intro = document.getElementById('intro');
 
   // Slider readouts
-  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog'].forEach(n => {
+  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog','anim','echo','strobe','symdist'].forEach(n => {
     const el = document.getElementById(n);
     const out = document.getElementById(n + '-val');
     el.addEventListener('input', () => out.textContent = el.value);
@@ -27,6 +27,13 @@
   const shape3dSel = document.getElementById('shape3d');
   const mode2dSel = document.getElementById('mode2d');
   const symSel = document.getElementById('symmetry');
+  const sym3dSel = document.getElementById('symmetry3d');
+  const animEl = document.getElementById('anim');
+  const symDistEl = document.getElementById('symdist');
+  const echoOnEl = document.getElementById('echo-on');
+  const echoEl = document.getElementById('echo');
+  const strobeEl = document.getElementById('strobe');
+  const strobePlate = document.getElementById('strobe-plate');
   const qualitySel = document.getElementById('quality');
   const presetSel = document.getElementById('preset');
   const col1 = document.getElementById('col1');
@@ -58,6 +65,281 @@
   const morphOnEl = document.getElementById('morph-on');
   const fogOnEl = document.getElementById('fog-on');
   const fogEl = document.getElementById('fog');
+  const vjSyncEl = document.getElementById('vj-sync');
+  const bpmTag = document.getElementById('bpm-tag');
+  const tempoVal = document.getElementById('tempo-val');
+  const routeEls = {
+    pulse: document.getElementById('route-pulse'),
+    texture: document.getElementById('route-texture'),
+    sparkle: document.getElementById('route-sparkle')
+  };
+
+  // ===== LANGUAGE =====
+  // Norwegian ships first; English is the fallback layer. Nothing is tagged in
+  // the markup — every string is reached through the id the control already
+  // has, so the HTML stays readable and the copy lives in exactly one place.
+  const LANG_KEY = 'viz.lang';
+  const LANGS = ['no', 'en'];
+  let lang = 'no';
+
+  const STR = {
+    en: {
+      // section headers, in panel order
+      sect: ['Appearance','Playback','Mode','Colors','Auto-VJ','Reactivity','Band routing','2D Effects','Motion & FX'],
+      // row labels, keyed by the first control in the row
+      lbl: {
+        lang:'Language', theme:'Skin', volume:'Volume', zoom:'3D zoom', zoom2d:'2D zoom',
+        'layer-mode':'Layers', shape3d:'3D shape', mode2d:'2D mode', symmetry:'2D symmetry',
+        quality:'Quality', symmetry3d:'3D symmetry', symdist:'Sym distance', anim:'Anim speed', preset:'Preset', col1:'Wave', 'bg-col':'BG', 'vj-speed':'VJ speed',
+        'vj-sync':'Bar sync', 'btn-tap':'Tempo',
+        'route-pulse':'Pulse', 'route-texture':'Texture', 'route-sparkle':'Sparkle',
+        sens:'Sensitivity', beat:'Beat', distort:'Distort', speed:'Spin', smooth:'Smooth',
+        opacity2d:'Opacity', glow:'Glow', trail:'Trails', 'bloom-on':'Bloom',
+        'hue-on':'Hue cycle', 'cam-motion':'Camera', 'ab-on':'RGB split', 'fb-on':'Feedback',
+        shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe', 'btn-midi':'MIDI',
+        'btn-model':'Own model'
+      },
+      opt: {
+        'layer-mode': { auto:'3D only', both:'Both layered', '2d-only':'2D only' },
+        shape3d: { sphere:'Sphere (blob)', cube:'Cube', icosa:'Icosahedron', torus:'Torus knot',
+          wire:'Wireframe globe', diamond:'Diamond', susan:'Susan', discoman:'Discoman',
+          danceman:'Danceman', blocks:'Blocks' },
+        mode2d: { ribbon:'Ribbon', wave:'Wave', orb:'Orb', nebula:'Nebula', particles:'Particles',
+          mountains:'Mountains', tunnel:'Tunnel', spectrum:'Spectrum bars', eq:'EQ (classic)',
+          radial:'Radial spectrum', scope:'Oscilloscope', waterfall:'Waterfall', grid:'LED grid',
+          rings:'Pulse rings', ripples:'Ripples', corona:'Coronal ejection', plasma:'Plasma',
+          fireworks:'Fireworks', drain:'Down the drain', emdr:'EMDR light', stars:'Starfield', cosmos:'Cosmos' },
+        symmetry: { '1':'None', '2':'Mirror', '3':'3-fold', '4':'4-fold', '6':'6-fold', '8':'8-fold' },
+        symmetry3d: { '1':'None', '2':'Mirror', '3':'3-fold', '4':'4-fold', '6':'6-fold', '8':'8-fold' },
+        quality: { '0.6':'Low', '1':'Standard', '1.5':'High', '2':'Ultra' },
+        preset: { silver:'Silver', aurora:'Aurora', 'deep-sea':'Deep sea', nebula:'Nebula',
+          lava:'Lava lamp', ice:'Ice', sunset:'Sunset', midnight:'Midnight', forest:'Forest', custom:'Custom' },
+        'route-pulse': { bass:'Bass', mid:'Mid', high:'Treble', beat:'Beat', mix:'Full mix' },
+        'route-texture': { bass:'Bass', mid:'Mid', high:'Treble', beat:'Beat', mix:'Full mix' },
+        'route-sparkle': { bass:'Bass', mid:'Mid', high:'Treble', beat:'Beat', mix:'Full mix' },
+        'cam-motion': { none:'Fixed', orbit:'Auto-orbit', dolly:'Dolly', sway:'Sway' },
+        theme: { spectra:'Retro · rack tuner', aero:'Aero · Vista glass' }
+      },
+      grp: { Abstract:'Abstract', Models:'Models', Mine:'Mine' },
+      btn: { 'btn-mic':'🎤 Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
+        'btn-beat':'⏱ Beat', 'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
+        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap' },
+      tip: { 'btn-mic':'Microphone', 'btn-sys':'System / tab audio — tick "share audio" in the dialog',
+        'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo',
+        'btn-pause':'Pause animation and music (Space)', 'btn-vj':'Toggle Auto-VJ (V)',
+        'btn-fs':'Fullscreen (F)', 'btn-hide':'Hide all UI (H)', 'btn-keys':'Keyboard shortcuts (?)',
+        'btn-panel':'Settings (P)', 'btn-reset':'Restore all settings to defaults',
+        'btn-model':'Load your own .obj, .stl or .glb model',
+        'btn-model-del':'Remove this model permanently',
+        'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.' },
+      keys: { title:'Keyboard shortcuts', hint:'Press ? or Esc to close',
+        rows:['Play / pause','Hide all UI','Fullscreen','Randomize look','Toggle Auto-VJ','Tap tempo',
+              'Settings panel','Switch skin','Prev / next 3D shape','Prev / next 2D mode'] },
+      introTitle: 'Audio Visualizer',
+      introDesc: 'Click a source below to start. Try Auto-VJ with your own track.<br><b>H</b> hides the UI · <b>?</b> shows all shortcuts.',
+      by: 'by',
+      pause:'⏸ Pause', play:'▶ Play', vjOn:'✨ Stop VJ', vjOff:'✨ Auto-VJ',
+      fsOn:'⛶ Exit', fsOff:'⛶ Full', midiOn:'On', midiOff:'Enable',
+      t: {
+        hueOff:'Hue cycle off', uiHidden:'UI hidden — press H to show', randomized:'🎲 Randomized',
+        paused:'⏸ Paused', playing:'▶ Playing', reset:'↺ Reset to defaults',
+        skin:'Skin', shape:'Shape', mode2d:'2D mode', lang:'Language',
+        sysNo:'System audio not supported in this browser',
+        sysNoAudio:'No audio shared — tick "Share tab/system audio" in the dialog',
+        sysOn:'🔊 System audio connected', sysOff:'System audio stopped',
+        sysFail:'System audio unavailable',
+        midiNo:'Web MIDI not supported', midiDenied:'MIDI access denied',
+        midiDev:'dev', midiNoDev:'no dev', midiErr:'err', midiNa:'n/a',
+        tris:'triangles', thinned:'(thinned to fit)', modelBad:'Could not read that model',
+        modelGone:'Model removed', modelCompressed:'Compressed glTF needs a decoder this page does not ship',
+        modelExternal:'That .gltf points at separate files — export as .glb instead',
+        framesWord:'frames', modelFrames:'Frames must all have the same vertex count',
+        tempoAuto:'Tempo: following the music', tempoTap:'Tempo', bpm:'BPM'
+      }
+    },
+    no: {
+      sect: ['Utseende','Avspilling','Modus','Farger','Auto-VJ','Reaktivitet','Båndruting','2D-effekter','Bevegelse og FX'],
+      lbl: {
+        lang:'Språk', theme:'Tema', volume:'Volum', zoom:'3D-zoom', zoom2d:'2D-zoom',
+        'layer-mode':'Lag', shape3d:'3D-form', mode2d:'2D-modus', symmetry:'2D-symmetri',
+        quality:'Kvalitet', symmetry3d:'3D-symmetri', symdist:'Sym-avstand', anim:'Anim-fart', preset:'Forhåndsvalg', col1:'Bølge', 'bg-col':'BG', 'vj-speed':'VJ-fart',
+        'vj-sync':'Taktsynk', 'btn-tap':'Tempo',
+        'route-pulse':'Puls', 'route-texture':'Tekstur', 'route-sparkle':'Glitter',
+        sens:'Følsomhet', beat:'Takt', distort:'Forvreng', speed:'Rotasjon', smooth:'Utjevning',
+        opacity2d:'Dekkevne', glow:'Glød', trail:'Spor', 'bloom-on':'Bloom',
+        'hue-on':'Fargesyklus', 'cam-motion':'Kamera', 'ab-on':'RGB-splitt', 'fb-on':'Tilbakekobling',
+        shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe', 'btn-midi':'MIDI',
+        'btn-model':'Egen modell'
+      },
+      opt: {
+        'layer-mode': { auto:'Kun 3D', both:'Begge lagvis', '2d-only':'Kun 2D' },
+        shape3d: { sphere:'Kule (blob)', cube:'Kube', icosa:'Ikosaeder', torus:'Torusknute',
+          wire:'Trådklode', diamond:'Diamant', susan:'Susan', discoman:'Discoman',
+          danceman:'Danceman', blocks:'Blokker' },
+        mode2d: { ribbon:'Bånd', wave:'Bølge', orb:'Kule', nebula:'Nebula', particles:'Partikler',
+          mountains:'Fjell', tunnel:'Tunnel', spectrum:'Spekterstolper', eq:'EQ (klassisk)',
+          radial:'Radialt spekter', scope:'Oscilloskop', waterfall:'Fossefall', grid:'LED-rutenett',
+          rings:'Pulsringer', ripples:'Krusninger', corona:'Koronautbrudd', plasma:'Plasma',
+          fireworks:'Fyrverkeri', drain:'Ned i sluket', emdr:'EMDR-lys', stars:'Stjernefelt', cosmos:'Kosmos' },
+        symmetry: { '1':'Ingen', '2':'Speil', '3':'3-delt', '4':'4-delt', '6':'6-delt', '8':'8-delt' },
+        symmetry3d: { '1':'Ingen', '2':'Speil', '3':'3-delt', '4':'4-delt', '6':'6-delt', '8':'8-delt' },
+        quality: { '0.6':'Lav', '1':'Standard', '1.5':'Høy', '2':'Ultra' },
+        preset: { silver:'Sølv', aurora:'Nordlys', 'deep-sea':'Dyphav', nebula:'Nebula',
+          lava:'Lavalampe', ice:'Is', sunset:'Solnedgang', midnight:'Midnatt', forest:'Skog', custom:'Egendefinert' },
+        'route-pulse': { bass:'Bass', mid:'Mellomtone', high:'Diskant', beat:'Takt', mix:'Hele miksen' },
+        'route-texture': { bass:'Bass', mid:'Mellomtone', high:'Diskant', beat:'Takt', mix:'Hele miksen' },
+        'route-sparkle': { bass:'Bass', mid:'Mellomtone', high:'Diskant', beat:'Takt', mix:'Hele miksen' },
+        'cam-motion': { none:'Fast', orbit:'Auto-bane', dolly:'Dolly', sway:'Svai' },
+        theme: { spectra:'Retro · rack-tuner', aero:'Aero · Vista-glass' }
+      },
+      grp: { Abstract:'Abstrakt', Models:'Modeller', Mine:'Egne' },
+      btn: { 'btn-mic':'🎤 Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
+        'btn-beat':'⏱ Takt', 'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
+        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp' },
+      tip: { 'btn-mic':'Mikrofon', 'btn-sys':'System-/fanelyd — huk av «del lyd» i dialogen',
+        'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo',
+        'btn-pause':'Pause animasjon og musikk (mellomrom)', 'btn-vj':'Slå Auto-VJ av/på (V)',
+        'btn-fs':'Fullskjerm (F)', 'btn-hide':'Skjul hele grensesnittet (H)',
+        'btn-keys':'Tastatursnarveier (?)', 'btn-panel':'Innstillinger (P)',
+        'btn-reset':'Tilbakestill alle innstillinger',
+        'btn-model':'Last inn din egen .obj-, .stl- eller .glb-modell',
+        'btn-model-del':'Fjern denne modellen permanent',
+        'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.' },
+      keys: { title:'Tastatursnarveier', hint:'Trykk ? eller Esc for å lukke',
+        rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Slå Auto-VJ av/på','Tapp tempo',
+              'Innstillinger','Bytt tema','Forrige / neste 3D-form','Forrige / neste 2D-modus'] },
+      introTitle: 'Lydvisualisering',
+      introDesc: 'Klikk en kilde nedenfor for å starte. Prøv Auto-VJ med ditt eget spor.<br><b>H</b> skjuler grensesnittet · <b>?</b> viser alle snarveier.',
+      by: 'av',
+      pause:'⏸ Pause', play:'▶ Spill', vjOn:'✨ Stopp VJ', vjOff:'✨ Auto-VJ',
+      fsOn:'⛶ Avslutt', fsOff:'⛶ Full', midiOn:'På', midiOff:'Slå på',
+      t: {
+        hueOff:'Fargesyklus av', uiHidden:'Grensesnitt skjult — trykk H for å vise',
+        randomized:'🎲 Tilfeldig', paused:'⏸ Pauset', playing:'▶ Spiller', reset:'↺ Tilbakestilt',
+        skin:'Tema', shape:'Form', mode2d:'2D-modus', lang:'Språk',
+        sysNo:'Systemlyd støttes ikke i denne nettleseren',
+        sysNoAudio:'Ingen lyd delt — huk av «del fane-/systemlyd» i dialogen',
+        sysOn:'🔊 Systemlyd tilkoblet', sysOff:'Systemlyd stoppet',
+        sysFail:'Systemlyd utilgjengelig',
+        midiNo:'Web MIDI støttes ikke', midiDenied:'MIDI-tilgang avslått',
+        midiDev:'enh.', midiNoDev:'ingen', midiErr:'feil', midiNa:'—',
+        tris:'trekanter', thinned:'(tynnet ut)', modelBad:'Klarte ikke lese modellen',
+        modelGone:'Modell fjernet', modelCompressed:'Komprimert glTF krever en dekoder denne siden ikke har',
+        modelExternal:'Denne .gltf-filen peker på egne filer — eksporter som .glb i stedet',
+        framesWord:'bilder', modelFrames:'Alle bildene må ha like mange hjørner',
+        tempoAuto:'Tempo: følger musikken', tempoTap:'Tempo', bpm:'BPM'
+      }
+    }
+  };
+
+  function L() { return STR[lang] || STR.en; }
+  function t(key) { return (L().t[key] !== undefined) ? L().t[key] : STR.en.t[key]; }
+
+  const langSel = document.getElementById('lang');
+  function applyLang(next, announce) {
+    if (LANGS.indexOf(next) === -1) next = 'no';
+    lang = next;
+    const D = L();
+    document.documentElement.setAttribute('lang', lang);
+    langSel.value = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+
+    // section headers, in document order
+    const heads = document.querySelectorAll('#panel h3');
+    heads.forEach((h, i) => {
+      if (!D.sect[i]) return;
+      // the collapse caret is a ::before, so textContent is the label alone
+      h.childNodes.forEach(n => { if (n.nodeType === 3) n.nodeValue = ''; });
+      h.appendChild(document.createTextNode(D.sect[i]));
+      h.dataset.sect = D.sect[i];
+    });
+
+    // row labels, keyed by the first identified control in the row
+    document.querySelectorAll('#panel .row').forEach(row => {
+      const label = row.querySelector('label');
+      const ctrl = row.querySelector('input[id], select[id], button[id]');
+      if (label && ctrl && D.lbl[ctrl.id]) label.textContent = D.lbl[ctrl.id];
+    });
+
+    // select options and optgroups
+    Object.keys(D.opt).forEach(selId => {
+      const sel = document.getElementById(selId); if (!sel) return;
+      [...sel.options].forEach(o => { if (D.opt[selId][o.value]) o.textContent = D.opt[selId][o.value]; });
+    });
+    document.querySelectorAll('#panel optgroup').forEach(g => {
+      const key = g.dataset.key || g.label;
+      g.dataset.key = key;
+      if (D.grp[key]) g.label = D.grp[key];
+    });
+
+    // static buttons and every tooltip
+    Object.keys(D.btn).forEach(id => {
+      const b = document.getElementById(id); if (b) b.textContent = D.btn[id];
+    });
+    Object.keys(D.tip).forEach(id => {
+      const b = document.getElementById(id); if (b) b.title = D.tip[id];
+    });
+
+    // shortcut card
+    const kc = document.getElementById('keys');
+    kc.querySelector('h4').textContent = D.keys.title;
+    kc.querySelector('.hint').textContent = D.keys.hint;
+    kc.querySelectorAll('.k span').forEach((s, i) => { if (D.keys.rows[i]) s.textContent = D.keys.rows[i]; });
+
+    // intro plate + byline
+    document.querySelector('#intro .title').textContent = D.introTitle;
+    document.querySelector('#intro .desc').innerHTML = D.introDesc;
+    document.querySelector('#credit .by').textContent = D.by;
+
+    // Labels that encode state have to be re-derived, not translated in place.
+    syncStatefulLabels();
+    if (announce && typeof toast === 'function') toast(t('lang') + ': ' + (lang === 'no' ? 'Norsk' : 'English'));
+  }
+
+  // Pause / fullscreen / Auto-VJ / MIDI all show one of two words depending on
+  // what they're doing right now, so a language switch re-reads that state.
+  function syncStatefulLabels() {
+    const D = L();
+    // State is read off the DOM, not off the module's `let` bindings: this runs
+    // during boot, before those are initialised, and `typeof` throws on a
+    // let/const still in its temporal dead zone.
+    const set = (id, onText, offText) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = el.classList.contains('on') ? onText : offText;
+    };
+    set('btn-pause', D.play, D.pause);
+    set('btn-vj', D.vjOn, D.vjOff);
+    set('btn-midi', D.midiOn, D.midiOff);
+    const fb = document.getElementById('btn-fs');
+    if (fb) fb.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? D.fsOn : D.fsOff;
+  }
+
+  try {
+    const savedLang = localStorage.getItem(LANG_KEY);
+    if (savedLang && LANGS.indexOf(savedLang) !== -1) lang = savedLang;
+  } catch (e) {}
+  langSel.addEventListener('change', () => applyLang(langSel.value, true));
+  applyLang(lang, false);   // Norwegian unless this browser saved otherwise
+
+  // ===== SKIN =====
+  // Two finished worlds, not a light/dark pair. Persisted per browser.
+  const THEME_KEY = 'viz.theme';
+  const THEMES = ['spectra', 'aero'];
+  const themeSel = document.getElementById('theme');
+  function applyTheme(name, announce) {
+    if (THEMES.indexOf(name) === -1) name = 'spectra';
+    document.documentElement.setAttribute('data-theme', name);
+    themeSel.value = name;
+    try { localStorage.setItem(THEME_KEY, name); } catch (e) {}
+    if (announce && typeof toast === 'function') {
+      toast(t('skin') + ': ' + (name === 'aero' ? 'Aero' : 'Retro'));
+    }
+  }
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved) applyTheme(saved, false);
+  } catch (e) {}
+  themeSel.addEventListener('change', () => applyTheme(themeSel.value, true));
 
   // Panel toggle
   const panel = document.getElementById('panel');
@@ -91,7 +373,7 @@
   const manualOverrideUntil = {};
   function markManual(id) { manualOverrideUntil[id] = performance.now() + 4000; }
   function isLockedByUser(id) { const t = manualOverrideUntil[id]; return t && performance.now() < t; }
-  ['speed','distort','glow','trail','opacity2d','col1','col2','col3','bg-col','shape3d','mode2d','symmetry','layer-mode'].forEach(id => {
+  ['speed','distort','glow','trail','opacity2d','col1','col2','col3','bg-col','shape3d','mode2d','symmetry','symmetry3d','layer-mode'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', () => markManual(id)); el.addEventListener('change', () => markManual(id)); }
   });
@@ -111,7 +393,7 @@
   };
   const presetKeys = Object.keys(presets);
   function stopHueCycle() {
-    if (hueOnEl && hueOnEl.checked) { hueOnEl.checked = false; if (typeof toast === 'function') toast('Hue cycle off'); }
+    if (hueOnEl && hueOnEl.checked) { hueOnEl.checked = false; if (typeof toast === 'function') toast(t('hueOff')); }
   }
   presetSel.addEventListener('change', () => {
     if (presets[presetSel.value]) {
@@ -172,7 +454,7 @@
   }
   async function startSystem() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      toast('System audio not supported in this browser');
+      toast(t('sysNo'));
       return;
     }
     try {
@@ -185,19 +467,19 @@
       const audioTracks = stream.getAudioTracks();
       if (audioTracks.length === 0) {
         stream.getTracks().forEach(t => t.stop());
-        toast('No audio shared — tick "Share tab/system audio" in the dialog');
+        toast(t('sysNoAudio'));
         return;
       }
       stream.getVideoTracks().forEach(t => t.stop()); // we only need the audio
       mediaStream = stream;
       source = audioCtx.createMediaStreamSource(stream);
       source.connect(analyser); // no output: it's already playing through the system
-      audioTracks[0].addEventListener('ended', () => { running = false; toast('System audio stopped'); });
+      audioTracks[0].addEventListener('ended', () => { running = false; toast(t('sysOff')); });
       running = true; dismissIntro();
-      toast('🔊 System audio connected');
+      toast(t('sysOn'));
     } catch (e) {
       console.error('System audio failed:', e);
-      if (e && e.name !== 'NotAllowedError') toast('System audio unavailable');
+      if (e && e.name !== 'NotAllowedError') toast(t('sysFail'));
     }
   }
   function startFile(file) {
@@ -269,7 +551,7 @@
   const pauseBtn = document.getElementById('btn-pause');
   function setPaused(p) {
     paused = p;
-    pauseBtn.textContent = p ? '▶ Play' : '⏸ Pause';
+    pauseBtn.textContent = p ? L().play : L().pause;
     pauseBtn.classList.toggle('on', p);
     if (p) {
       if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
@@ -303,7 +585,7 @@
   }
   function updateFsBtn() {
     const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
-    fsBtn.textContent = on ? '⛶ Exit' : '⛶ Full';
+    fsBtn.textContent = on ? L().fsOn : L().fsOff;
     fsBtn.classList.toggle('on', on);
   }
   fsBtn.addEventListener('click', toggleFullscreen);
@@ -315,7 +597,7 @@
   function setUiHidden(h) {
     uiHidden = h;
     document.body.classList.toggle('ui-hidden', h);
-    if (h) { toggleKeys(false); toast('UI hidden — press H to show'); }
+    if (h) { toggleKeys(false); toast(t('uiHidden')); }
   }
 
   // Screen wake lock
@@ -347,7 +629,7 @@
     setSliderVal('glow', Math.round(rand(15, 50)));
     setSliderVal('trail', Math.round(rand(78, 94)));
     setSliderVal('speed', Math.round(rand(60, 180)));
-    toast('🎲 Randomized');
+    toast(t('randomized'));
   }
   function cycleSelect(sel, options, dir, id, label) {
     const i = options.indexOf(sel.value);
@@ -372,18 +654,25 @@
     const tag = (e.target.tagName || '').toUpperCase();
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     switch (e.key) {
-      case ' ': e.preventDefault(); setPaused(!paused); toast(paused ? '⏸ Paused' : '▶ Playing'); break;
+      case ' ': e.preventDefault(); setPaused(!paused); toast(paused ? t('paused') : t('playing')); break;
       case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
       case 'h': case 'H': e.preventDefault(); setUiHidden(!uiHidden); break;
       case 'r': case 'R': e.preventDefault(); randomizeAll(); break;
       case 'v': case 'V': e.preventDefault(); setVj(!vjActive); break;
+      case 'b': case 'B': e.preventDefault(); tapTempo(); break;
       case 'p': case 'P': e.preventDefault(); panel.classList.toggle('open'); break;
+      case 't': case 'T': {
+        e.preventDefault();
+        const cur = document.documentElement.getAttribute('data-theme');
+        applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length], true);
+        break;
+      }
       case '?': e.preventDefault(); toggleKeys(); break;
       case 'Escape': toggleKeys(false); break;
-      case 'ArrowRight': e.preventDefault(); cycleSelect(shape3dSel, shapeOptions, 1, 'shape3d', 'Shape'); break;
-      case 'ArrowLeft':  e.preventDefault(); cycleSelect(shape3dSel, shapeOptions, -1, 'shape3d', 'Shape'); break;
-      case 'ArrowUp':    e.preventDefault(); cycleSelect(mode2dSel, mode2dOptions, 1, 'mode2d', '2D mode'); break;
-      case 'ArrowDown':  e.preventDefault(); cycleSelect(mode2dSel, mode2dOptions, -1, 'mode2d', '2D mode'); break;
+      case 'ArrowRight': e.preventDefault(); cycleSelect(shape3dSel, shapeOptions, 1, 'shape3d', t('shape')); break;
+      case 'ArrowLeft':  e.preventDefault(); cycleSelect(shape3dSel, shapeOptions, -1, 'shape3d', t('shape')); break;
+      case 'ArrowUp':    e.preventDefault(); cycleSelect(mode2dSel, mode2dOptions, 1, 'mode2d', t('mode2d')); break;
+      case 'ArrowDown':  e.preventDefault(); cycleSelect(mode2dSel, mode2dOptions, -1, 'mode2d', t('mode2d')); break;
     }
   });
 
@@ -451,19 +740,19 @@
   }
   async function enableMidi() {
     if (midiOn) return;
-    if (!navigator.requestMIDIAccess) { midiStatus.textContent = 'n/a'; toast('Web MIDI not supported'); return; }
+    if (!navigator.requestMIDIAccess) { midiStatus.textContent = t('midiNa'); toast(t('midiNo')); return; }
     try {
       const access = await navigator.requestMIDIAccess();
       midiOn = true;
-      midiBtn.textContent = 'On'; midiBtn.classList.add('on');
+      midiBtn.textContent = L().midiOn; midiBtn.classList.add('on');
       const bind = () => {
         let count = 0;
         access.inputs.forEach(inp => { inp.onmidimessage = handleMidi; count++; });
-        midiStatus.textContent = count ? count + ' dev' : 'no dev';
+        midiStatus.textContent = count ? count + ' ' + t('midiDev') : t('midiNoDev');
       };
       bind();
       access.onstatechange = bind;
-    } catch (e) { midiStatus.textContent = 'err'; toast('MIDI access denied'); }
+    } catch (e) { midiStatus.textContent = t('midiErr'); toast(t('midiDenied')); }
   }
   midiBtn.addEventListener('click', enableMidi);
 
@@ -483,7 +772,7 @@
     Object.keys(manualOverrideUntil).forEach(k => delete manualOverrideUntil[k]);
     applyVolume(); applyZoom();
     logicW = 0; logicH = 0; fit();
-    toast('↺ Reset to defaults');
+    toast(t('reset'));
   }
   document.getElementById('btn-reset').addEventListener('click', resetDefaults);
 
@@ -492,8 +781,142 @@
   window.addEventListener('drop', e => {
     e.preventDefault();
     const f = e.dataTransfer.files[0];
-    if (f && f.type.startsWith('audio/')) startFile(f);
+    if (!f) return;
+    if (/\.(obj|stl|glb|gltf)$/i.test(f.name)) loadModelFile(f);
+    else if (f.type.startsWith('audio/')) startFile(f);
   });
+
+  // ===== TEMPO =====
+  // The kick detector fires on individual hits, which is enough to flash a lamp
+  // but not enough to be musical: changes land wherever the last kick happened
+  // to fall. Reading a period out of the gaps between hits gives a free-running
+  // clock that carries the pulse through breakdowns and dropped kicks, and — more
+  // usefully — gives us bars, so a change can land on a downbeat.
+  const BEATS_PER_BAR = 4, BARS_PER_PHRASE = 4;
+  const tempo = {
+    hits: [],      // recent detected-beat timestamps, seconds
+    bpm: 0,        // 0 while unlocked
+    conf: 0,       // share of gaps that agree with the estimate
+    period: 0,
+    nextAt: 0,     // when the clock's next beat is due
+    beat: 0,       // beats since the clock last anchored
+    tick: false,   // a clock beat happened this frame
+    bar: false,    // ... and it opened a bar
+    phrase: false, // ... and it opened a four-bar phrase
+    taps: [],
+    tapped: 0      // tapped BPM; overrides the estimate while non-zero
+  };
+  const TEMPO_LOCK = 0.35;   // below this the clock stays out of the way
+
+  function estimateTempo() {
+    // Gaps outside 30–240 BPM are not a pulse anyone is dancing to.
+    const gaps = [];
+    for (let i = 1; i < tempo.hits.length; i++) {
+      const g = tempo.hits[i] - tempo.hits[i - 1];
+      if (g >= 0.25 && g <= 2.0) gaps.push(g);
+    }
+    if (gaps.length < 4) return;
+    const sorted = gaps.slice().sort((a, b) => a - b);
+    let period = sorted[sorted.length >> 1];
+    // A missed kick doubles a gap and a ghost hit halves it, so fold the median
+    // into one octave (70–176 BPM) before trusting it.
+    while (period < 0.34) period *= 2;
+    while (period > 0.86) period /= 2;
+    // Then let every gap that is a near-whole multiple of that period vote, so
+    // half-time hits and dropped kicks refine the estimate instead of wrecking
+    // it. A gap four beats long is much weaker evidence than a gap of one — with
+    // flat weights, random hits clear the bar about two thirds of the time,
+    // because near-multiples of *something* cover most of the legal gap range.
+    // Weighting by 1/mult, and tightening the window, keeps noise unlocked.
+    let sum = 0, votes = 0, weight = 0;
+    for (const g of gaps) {
+      const mult = Math.round(g / period);
+      if (mult < 1 || mult > 4) continue;
+      if (Math.abs(g / mult - period) / period > 0.09) continue;
+      sum += g / mult; votes++; weight += 1 / mult;
+    }
+    if (votes < 3) { tempo.conf *= 0.9; return; }
+    tempo.period = sum / votes;
+    tempo.conf = weight / gaps.length;
+    tempo.bpm = Math.round(60 / tempo.period);
+  }
+
+  function updateTempo(now, dt, hit) {
+    if (hit) {
+      tempo.hits.push(now);
+      if (tempo.hits.length > 24) tempo.hits.shift();
+      while (tempo.hits.length && now - tempo.hits[0] > 12) tempo.hits.shift();
+      estimateTempo();
+    } else if (tempo.hits.length && now - tempo.hits[tempo.hits.length - 1] > 4) {
+      // Four seconds of nothing: let the lock decay rather than keep asserting a
+      // tempo that stopped being true.
+      tempo.conf *= Math.pow(0.5, dt);
+      if (tempo.conf < 0.15) { tempo.bpm = 0; tempo.period = 0; tempo.hits.length = 0; }
+    }
+    if (tempo.tapped > 0) {
+      tempo.bpm = tempo.tapped; tempo.period = 60 / tempo.tapped; tempo.conf = 1;
+    }
+
+    tempo.tick = tempo.bar = tempo.phrase = false;
+    if (!tempo.period || tempo.conf < TEMPO_LOCK) { tempo.nextAt = 0; return; }
+    if (!tempo.nextAt) { tempo.nextAt = now + tempo.period; tempo.beat = 0; }
+
+    // Phase-lock softly, so the clock follows a drifting set without lurching on
+    // one false positive. Only a hit far off the grid is allowed to re-anchor.
+    if (hit && !tempo.tapped) {
+      let err = now - (tempo.nextAt - tempo.period);   // how late this hit landed
+      if (err > tempo.period / 2) err -= tempo.period; // ... or how early
+      if (Math.abs(err) > tempo.period * 0.35) { tempo.nextAt = now + tempo.period; tempo.beat = 0; }
+      else tempo.nextAt += err * 0.12;
+    }
+
+    if (now >= tempo.nextAt) {
+      tempo.nextAt += tempo.period;
+      if (now >= tempo.nextAt) tempo.nextAt = now + tempo.period;   // after a stall
+      tempo.beat++;
+      tempo.tick = true;
+      tempo.bar = (tempo.beat % BEATS_PER_BAR) === 0;
+      tempo.phrase = (tempo.beat % (BEATS_PER_BAR * BARS_PER_PHRASE)) === 0;
+    }
+  }
+
+  // One tap can't imply a tempo, so the first tap after a pause is spent
+  // releasing back to automatic — which also makes the manual lock escapable.
+  function tapTempo() {
+    const now = performance.now() / 1000;
+    if (tempo.taps.length && now - tempo.taps[tempo.taps.length - 1] > 2.2) tempo.taps.length = 0;
+    if (!tempo.taps.length && tempo.tapped) {
+      tempo.tapped = 0; tempo.conf = 0; tempo.bpm = 0; tempo.period = 0; tempo.nextAt = 0;
+      toast(t('tempoAuto'));
+      return;
+    }
+    tempo.taps.push(now);
+    if (tempo.taps.length > 8) tempo.taps.shift();
+    if (tempo.taps.length < 2) return;
+    const span = tempo.taps[tempo.taps.length - 1] - tempo.taps[0];
+    const bpm = Math.round(60 / (span / (tempo.taps.length - 1)));
+    if (bpm < 40 || bpm > 260) return;
+    tempo.tapped = bpm;
+    tempo.period = 60 / bpm; tempo.bpm = bpm; tempo.conf = 1;
+    tempo.nextAt = now + tempo.period; tempo.beat = 0;   // this tap is the downbeat
+    toast(t('tempoTap') + ': ' + bpm + ' ' + t('bpm'));
+  }
+  document.getElementById('btn-tap').addEventListener('click', tapTempo);
+
+  // Two readouts of one number: the panel row, and a stage tag that survives
+  // the panel being shut — the only place tempo is visible mid-performance.
+  let bpmShown = -1, bpmClass = '';
+  function paintTempo() {
+    const locked = tempo.bpm > 0 && tempo.conf >= TEMPO_LOCK;
+    const cls = !locked ? 'idle' : (tempo.tapped ? 'tapped' : '');
+    if (tempo.bpm !== bpmShown || cls !== bpmClass) {
+      bpmShown = tempo.bpm; bpmClass = cls;
+      const text = locked ? tempo.bpm + ' ' + t('bpm') : '— ' + t('bpm');
+      bpmTag.textContent = text;
+      bpmTag.className = cls;
+      tempoVal.textContent = locked ? String(tempo.bpm) : '—';
+    }
+  }
 
   // ===== AUTO-VJ =====
   let vjActive = false;
@@ -504,7 +927,10 @@
     opacity2d: 0.8, tOpacity2d: 0.8, glow: 28, tGlow: 28, trail: 0.86, tTrail: 0.86,
     shape3d: 'sphere', mode2d: 'ribbon', symmetry: 1, layer: 'auto',
     beatsSinceShapeChange: 0, beatsSinceModeChange: 0, beatsSinceSymChange: 0,
-    beatsSinceLayerChange: 0, beatsSincePalette: 0, timeSinceTarget: 0
+    beatsSinceLayerChange: 0, beatsSincePalette: 0, timeSinceTarget: 0,
+    // A change that is due but waiting for a musical boundary to land on.
+    wantShape: false, wantMode: false, wantSym: false, wantLayer: false,
+    wantPalette: false, wantTarget: false
   };
   function hexToRgb(h) { const m = h.replace('#',''); return [parseInt(m.substr(0,2),16),parseInt(m.substr(2,2),16),parseInt(m.substr(4,2),16)]; }
   function rgbToHex(c) { return '#' + [c[0],c[1],c[2]].map(v => { const x = Math.max(0, Math.min(255, Math.round(v))).toString(16); return x.length < 2 ? '0' + x : x; }).join(''); }
@@ -538,15 +964,15 @@
     vjState.tDistort = rand(0.5, 1.8); vjState.tSpeed = rand(0.6, 1.8);
     vjState.tOpacity2d = rand(0.4, 0.95); vjState.tGlow = rand(15, 50); vjState.tTrail = rand(0.75, 0.95);
   }
-  const shapeOptions = ['sphere','icosa','torus','wire','frog','cow','cat','mushroom','heart','diamond','pumpkin','snowman','robot','rocket'];
-  const mode2dOptions = ['ribbon','wave','orb','nebula','particles','mountains','tunnel','spectrum','eq','radial','scope','waterfall','grid','rings','stars','cosmos','ripples','corona','plasma','fireworks','drain'];
+  const shapeOptions = ['sphere','cube','icosa','torus','wire','diamond','susan','discoman','danceman','blocks'];
+  const mode2dOptions = ['ribbon','wave','orb','nebula','particles','mountains','tunnel','spectrum','eq','radial','scope','waterfall','grid','rings','stars','cosmos','ripples','corona','plasma','fireworks','drain','emdr'];
   const symOptions = [1,1,1,2,3,4,6,8];
   const layerOptions = ['auto','auto','both','2d-only'];
 
   function setVj(on) {
     vjActive = on;
     const btn = document.getElementById('btn-vj');
-    btn.textContent = on ? '✨ Stop VJ' : '✨ Auto-VJ';
+    btn.textContent = on ? L().vjOn : L().vjOff;
     btn.classList.toggle('on', on);
     vjTag.style.display = on ? 'block' : 'none';
     if (on) {
@@ -564,6 +990,8 @@
       vjState.beatsSinceShapeChange = 0; vjState.beatsSinceModeChange = 0;
       vjState.beatsSinceSymChange = 0; vjState.beatsSinceLayerChange = 0;
       vjState.beatsSincePalette = 0;
+      vjState.wantShape = vjState.wantMode = vjState.wantSym = false;
+      vjState.wantLayer = vjState.wantPalette = vjState.wantTarget = false;
       Object.keys(manualOverrideUntil).forEach(k => delete manualOverrideUntil[k]);
     }
   }
@@ -588,9 +1016,20 @@
     vjState.opacity2d = lerp(vjState.opacity2d, vjState.tOpacity2d, k);
     vjState.glow = lerp(vjState.glow, vjState.tGlow, k);
     vjState.trail = lerp(vjState.trail, vjState.tTrail, k);
+    // With a tempo lock, a change that comes due waits for the next downbeat —
+    // and the biggest change, the layer flip, waits for a whole phrase. That is
+    // the difference between a set that switches on the music and one that
+    // switches near it. Unlocked, or with bar sync off, both gates are open and
+    // this behaves exactly as it did before.
+    const synced = vjSyncEl.checked && tempo.period > 0 && tempo.conf >= TEMPO_LOCK;
+    const onBar = !synced || tempo.bar;
+    const onPhrase = !synced || tempo.phrase;
+
     vjState.timeSinceTarget += dt;
-    if (vjState.timeSinceTarget > 8 / Math.max(0.3, vjRate)) {
-      pickNewPalette(); pickNewParams(); vjState.timeSinceTarget = 0;
+    if (vjState.timeSinceTarget > 8 / Math.max(0.3, vjRate)) vjState.wantTarget = true;
+    if (vjState.wantTarget && onBar) {
+      pickNewPalette(); pickNewParams();
+      vjState.wantTarget = false; vjState.timeSinceTarget = 0;
     }
     if (beatTriggered) {
       vjState.beatsSinceShapeChange++; vjState.beatsSinceModeChange++;
@@ -612,24 +1051,34 @@
     const symT = 12 / Math.max(0.3, vjRate);
     const layerT = 18 / Math.max(0.3, vjRate);
     const paletteT = 16 / Math.max(0.3, vjRate);
-    if (vjState.beatsSinceShapeChange >= shapeEvery || vjState.timeSinceShape >= shapeT) {
+    if (vjState.beatsSinceShapeChange >= shapeEvery || vjState.timeSinceShape >= shapeT) vjState.wantShape = true;
+    if (vjState.wantShape && onBar) {
       vjState.shape3d = pick(shapeOptions.filter(s => s !== vjState.shape3d));
+      vjState.wantShape = false;
       vjState.beatsSinceShapeChange = 0; vjState.timeSinceShape = 0;
     }
-    if (vjState.beatsSinceModeChange >= modeEvery || vjState.timeSinceMode >= modeT) {
+    if (vjState.beatsSinceModeChange >= modeEvery || vjState.timeSinceMode >= modeT) vjState.wantMode = true;
+    if (vjState.wantMode && onBar) {
       vjState.mode2d = pick(mode2dOptions.filter(m => m !== vjState.mode2d));
+      vjState.wantMode = false;
       vjState.beatsSinceModeChange = 0; vjState.timeSinceMode = 0;
     }
-    if (vjState.beatsSinceSymChange >= symEvery || vjState.timeSinceSym >= symT) {
+    if (vjState.beatsSinceSymChange >= symEvery || vjState.timeSinceSym >= symT) vjState.wantSym = true;
+    if (vjState.wantSym && onBar) {
       vjState.symmetry = pick(symOptions);
+      vjState.wantSym = false;
       vjState.beatsSinceSymChange = 0; vjState.timeSinceSym = 0;
     }
-    if (vjState.beatsSinceLayerChange >= layerEvery || vjState.timeSinceLayer >= layerT) {
+    if (vjState.beatsSinceLayerChange >= layerEvery || vjState.timeSinceLayer >= layerT) vjState.wantLayer = true;
+    if (vjState.wantLayer && onPhrase) {
       vjState.layer = pick(layerOptions);
+      vjState.wantLayer = false;
       vjState.beatsSinceLayerChange = 0; vjState.timeSinceLayer = 0;
     }
-    if (vjState.beatsSincePalette >= paletteEvery || vjState.timeSincePaletteCh >= paletteT) {
+    if (vjState.beatsSincePalette >= paletteEvery || vjState.timeSincePaletteCh >= paletteT) vjState.wantPalette = true;
+    if (vjState.wantPalette && onBar) {
       pickNewPalette();
+      vjState.wantPalette = false;
       vjState.beatsSincePalette = 0; vjState.timeSincePaletteCh = 0;
     }
     if (!isLockedByUser('col1')) col1.value = rgbToHex(vjState.col1);
@@ -644,6 +1093,7 @@
     if (!isLockedByUser('shape3d')) shape3dSel.value = vjState.shape3d;
     if (!isLockedByUser('mode2d')) mode2dSel.value = vjState.mode2d;
     if (!isLockedByUser('symmetry')) symSel.value = String(vjState.symmetry);
+    if (!isLockedByUser('symmetry3d')) sym3dSel.value = String(vjState.symmetry);
     if (!isLockedByUser('layer-mode')) layerSel.value = vjState.layer;
     presetSel.value = 'custom';
   }
@@ -653,14 +1103,6 @@
   let currentShape = null, geomData = {}, threeReady = false;
   const persistRot = { x: 0, y: 0 };
 
-  function ellipsoidPart(rx, ry, rz, tx, ty, tz, detail) {
-    const g = new THREE.IcosahedronGeometry(1, detail);
-    g.scale(rx, ry, rz);
-    g.translate(tx, ty, tz);
-    const f = g.toNonIndexed(); g.dispose();
-    f.computeVertexNormals();
-    return f;
-  }
   // Wrap any THREE geometry into a displaceable part (optional rotation, then scale + translate)
   function primPart(geom, sx, sy, sz, tx, ty, tz, rx, ry, rz) {
     if (rx) geom.rotateX(rx);
@@ -689,130 +1131,28 @@
     merged.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
     return merged;
   }
-  function makeFrogGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(1.15, 0.70, 1.05,  0.00, -0.10,  0.00, 4),
-      e(0.62, 0.52, 0.62,  0.00,  0.28,  0.70, 4),
-      e(0.30, 0.34, 0.30, -0.34,  0.62,  0.55, 3),
-      e(0.30, 0.34, 0.30,  0.34,  0.62,  0.55, 3),
-      e(0.16, 0.18, 0.16, -0.34,  0.74,  0.62, 2),
-      e(0.16, 0.18, 0.16,  0.34,  0.74,  0.62, 2),
-      e(0.32, 0.22, 0.55, -0.78, -0.20, -0.10, 3),
-      e(0.32, 0.22, 0.55,  0.78, -0.20, -0.10, 3),
-      e(0.28, 0.20, 0.45, -0.55, -0.35,  0.55, 3),
-      e(0.28, 0.20, 0.45,  0.55, -0.35,  0.55, 3)
-    ]);
-  }
-  function makeCowGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(0.85, 0.60, 1.35,  0.00,  0.00,  0.00, 4),
-      e(0.50, 0.45, 0.55,  0.00,  0.35,  1.05, 4),
-      e(0.38, 0.32, 0.35,  0.00,  0.10,  1.45, 3),
-      e(0.22, 0.10, 0.30, -0.42,  0.50,  0.95, 2),
-      e(0.22, 0.10, 0.30,  0.42,  0.50,  0.95, 2),
-      e(0.10, 0.20, 0.10, -0.22,  0.78,  1.00, 2),
-      e(0.10, 0.20, 0.10,  0.22,  0.78,  1.00, 2),
-      e(0.16, 0.55, 0.16, -0.55, -0.75,  0.85, 2),
-      e(0.16, 0.55, 0.16,  0.55, -0.75,  0.85, 2),
-      e(0.16, 0.55, 0.16, -0.55, -0.75, -0.85, 2),
-      e(0.16, 0.55, 0.16,  0.55, -0.75, -0.85, 2),
-      e(0.06, 0.06, 0.40,  0.00,  0.10, -1.50, 2),
-      e(0.30, 0.20, 0.28,  0.00, -0.55,  0.35, 2)
-    ]);
-  }
-  function makeCatGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(0.50, 0.42, 0.95,  0.00, -0.10,  0.00, 4),
-      e(0.40, 0.38, 0.42,  0.00,  0.20,  0.90, 4),
-      e(0.10, 0.25, 0.10, -0.24,  0.55,  0.80, 2),
-      e(0.10, 0.25, 0.10,  0.24,  0.55,  0.80, 2),
-      e(0.10, 0.45, 0.10, -0.32, -0.55,  0.55, 2),
-      e(0.10, 0.45, 0.10,  0.32, -0.55,  0.55, 2),
-      e(0.10, 0.45, 0.10, -0.32, -0.55, -0.55, 2),
-      e(0.10, 0.45, 0.10,  0.32, -0.55, -0.55, 2),
-      e(0.08, 0.08, 0.35,  0.00, -0.15, -1.10, 2),
-      e(0.08, 0.08, 0.30,  0.00,  0.15, -1.40, 2),
-      e(0.07, 0.07, 0.25,  0.00,  0.45, -1.55, 2),
-      e(0.08, 0.07, 0.08, -0.15,  0.20,  1.18, 2),
-      e(0.08, 0.07, 0.08,  0.15,  0.20,  1.18, 2),
-      e(0.06, 0.05, 0.06,  0.00,  0.05,  1.28, 2)
-    ]);
-  }
-  function makeMushroomGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(0.95, 0.55, 0.95,  0.00,  0.40,  0.00, 4),
-      e(0.32, 0.55, 0.32,  0.00, -0.40,  0.00, 3),
-      e(0.40, 0.10, 0.40,  0.00, -0.10,  0.00, 2),
-      e(0.16, 0.05, 0.16,  0.30,  0.78,  0.20, 2),
-      e(0.14, 0.05, 0.14, -0.35,  0.75, -0.15, 2),
-      e(0.13, 0.05, 0.13,  0.10,  0.85, -0.35, 2),
-      e(0.12, 0.05, 0.12, -0.05,  0.82,  0.45, 2)
-    ]);
-  }
 
-  function makeHeartGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(0.60, 0.60, 0.55, -0.42, 0.35, 0, 4),
-      e(0.60, 0.60, 0.55,  0.42, 0.35, 0, 4),
-      primPart(new THREE.ConeGeometry(1.05, 1.6, 32), 1, 1, 0.85, 0, 0.05, 0, Math.PI, 0, 0)
-    ]);
-  }
   function makeDiamondGeom() {
     return mergeParts([ primPart(new THREE.OctahedronGeometry(1.15, 2), 1, 1.35, 1, 0, 0, 0) ]);
   }
-  function makePumpkinGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(1.15, 0.90, 1.15, 0, 0, 0, 4),
-      e(0.90, 0.95, 0.90, 0, 0, 0, 3),
-      primPart(new THREE.CylinderGeometry(0.11, 0.16, 0.55, 12), 1, 1, 1, 0, 0.95, 0)
-    ]);
-  }
-  function makeSnowmanGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      e(0.85, 0.85, 0.85, 0, -0.85, 0, 4),
-      e(0.62, 0.62, 0.62, 0,  0.25, 0, 4),
-      e(0.45, 0.45, 0.45, 0,  1.05, 0, 4),
-      e(0.06, 0.06, 0.06, -0.16, 1.12, 0.42, 2),
-      e(0.06, 0.06, 0.06,  0.16, 1.12, 0.42, 2),
-      primPart(new THREE.ConeGeometry(0.08, 0.35, 12), 1, 1, 1, 0, 1.02, 0.5, Math.PI / 2, 0, 0)
-    ]);
-  }
-  function makeRobotGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      primPart(new THREE.BoxGeometry(1.4, 1.3, 1.3, 4, 4, 4), 1, 1, 1, 0, 0, 0),
-      e(0.16, 0.16, 0.06, -0.32, 0.15, 0.68, 2),
-      e(0.16, 0.16, 0.06,  0.32, 0.15, 0.68, 2),
-      e(0.28, 0.06, 0.04, 0, -0.35, 0.68, 2),
-      primPart(new THREE.CylinderGeometry(0.04, 0.04, 0.4, 8), 1, 1, 1, 0, 0.95, 0),
-      e(0.10, 0.10, 0.10, 0, 1.20, 0, 2)
-    ]);
-  }
-  function makeRocketGeom() {
-    const e = ellipsoidPart;
-    return mergeParts([
-      primPart(new THREE.CylinderGeometry(0.5, 0.5, 1.4, 24, 4), 1, 1, 1, 0, -0.1, 0),
-      primPart(new THREE.ConeGeometry(0.5, 0.8, 24), 1, 1, 1, 0, 1.0, 0),
-      e(0.10, 0.35, 0.40, -0.5, -0.75, 0, 2),
-      e(0.10, 0.35, 0.40,  0.5, -0.75, 0, 2),
-      e(0.10, 0.35, 0.40, 0, -0.75, -0.5, 2),
-      e(0.10, 0.35, 0.40, 0, -0.75,  0.5, 2)
-    ]);
+
+  // Bundled models arrive pre-triangulated and pre-normalised as quantised
+  // int16, so there is nothing to parse at startup — just widen back to float.
+  function decodeBundled(m) {
+    const bin = atob(m.data), n = bin.length / 2;
+    const out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      let v = bin.charCodeAt(i * 2) | (bin.charCodeAt(i * 2 + 1) << 8);
+      if (v > 32767) v -= 65536;
+      out[i] = v / 32767 * m.span;
+    }
+    return out;
   }
 
   function makeGeom(key) {
-    const compound = {
-      frog: makeFrogGeom, cow: makeCowGeom, cat: makeCatGeom, mushroom: makeMushroomGeom,
-      heart: makeHeartGeom, diamond: makeDiamondGeom, pumpkin: makePumpkinGeom,
-      snowman: makeSnowmanGeom, robot: makeRobotGeom, rocket: makeRocketGeom
-    };
+    const bundled = window.BUNDLED_MODELS && window.BUNDLED_MODELS[key];
+    if (bundled) return geomFromFrames([decodeBundled(bundled)]);
+    const compound = { diamond: makeDiamondGeom };
     if (compound[key]) {
       const flat = compound[key]();
       return { geom: flat, basePos: new Float32Array(flat.attributes.position.array), baseNorm: new Float32Array(flat.attributes.normal.array) };
@@ -821,11 +1161,418 @@
     if (key === 'sphere') g = new THREE.IcosahedronGeometry(1, 12);
     else if (key === 'icosa') g = new THREE.IcosahedronGeometry(1.1, 3);
     else if (key === 'torus') g = new THREE.TorusKnotGeometry(0.8, 0.28, 128, 20);
+    // segmented so the noise displacement has vertices to actually push around;
+    // a 6-quad cube would just wobble as a rigid box
+    else if (key === 'cube') g = new THREE.BoxGeometry(1.55, 1.55, 1.55, 8, 8, 8);
     else g = new THREE.IcosahedronGeometry(1.1, 5);
     const flat = g.toNonIndexed(); g.dispose();
     flat.computeVertexNormals();
     return { geom: flat, basePos: new Float32Array(flat.attributes.position.array), baseNorm: new Float32Array(flat.attributes.normal.array) };
   }
+
+  // ===== USER MODELS =====
+  // No loader library ships with this page, so OBJ and STL are parsed here.
+  // Only positions are read — normals get recomputed every frame by displace()
+  // anyway, and materials/UVs are unused.
+  //
+  // The ceiling is CPU, not GPU: displace() runs three 3D-noise lookups per
+  // vertex per frame, so a 500k-triangle download would stall the loop long
+  // before the renderer noticed. Anything heavier gets thinned on the way in.
+  const MAX_TRIS = 40000;
+
+  function parseOBJ(text) {
+    const verts = [], tris = [];
+    for (const raw of text.split('\n')) {
+      const line = raw.trim();
+      if (line.startsWith('v ')) {
+        const p = line.split(/\s+/);
+        verts.push([+p[1], +p[2], +p[3]]);
+      } else if (line.startsWith('f ')) {
+        const idx = line.split(/\s+/).slice(1).map(tok => {
+          const i = parseInt(tok.split('/')[0], 10);
+          return i < 0 ? verts.length + i : i - 1;   // OBJ allows negative refs
+        });
+        // fan-triangulate quads and n-gons
+        for (let k = 1; k + 1 < idx.length; k++) {
+          const a = verts[idx[0]], b = verts[idx[k]], c = verts[idx[k + 1]];
+          if (a && b && c) tris.push(a, b, c);
+        }
+      }
+    }
+    return tris;
+  }
+
+  function parseSTL(buf) {
+    const dv = new DataView(buf);
+    // Binary STL declares its triangle count at byte 80; if that count exactly
+    // predicts the file length it is binary, whatever the header claims.
+    if (buf.byteLength > 84) {
+      const n = dv.getUint32(80, true);
+      if (84 + n * 50 === buf.byteLength) {
+        const tris = [];
+        let o = 84;
+        for (let i = 0; i < n; i++) {
+          o += 12;                                   // skip the stored normal
+          for (let v = 0; v < 3; v++) {
+            tris.push([dv.getFloat32(o, true), dv.getFloat32(o + 4, true), dv.getFloat32(o + 8, true)]);
+            o += 12;
+          }
+          o += 2;                                    // attribute byte count
+        }
+        return tris;
+      }
+    }
+    const text = new TextDecoder().decode(buf);
+    const tris = [];
+    const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
+    let m;
+    while ((m = re.exec(text))) tris.push([+m[1], +m[2], +m[3]]);
+    return tris;
+  }
+
+  // glTF 2.0. three r150 dropped the non-module GLTFLoader, so rather than
+  // couple this page to a specific loader build we read the container directly:
+  // .glb, and .gltf whose buffers are embedded as data URIs. Only POSITION and
+  // indices are touched, with node transforms baked in so multi-part models
+  // arrive assembled rather than piled at the origin.
+  function b64ToBuf(uri) {
+    const bin = atob(uri.slice(uri.indexOf(',') + 1));
+    const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return u8.buffer;
+  }
+  function parseGLTF(buf) {
+    let json = null, bin = null;
+    const dv = new DataView(buf);
+    if (buf.byteLength > 12 && dv.getUint32(0, true) === 0x46546C67) {   // 'glTF'
+      let o = 12;
+      while (o + 8 <= buf.byteLength) {
+        const len = dv.getUint32(o, true), type = dv.getUint32(o + 4, true);
+        const data = buf.slice(o + 8, o + 8 + len);
+        if (type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(data));
+        else if (type === 0x004E4942) bin = data;
+        o += 8 + len + ((4 - (len % 4)) % 4);          // chunks are 4-byte aligned
+      }
+    } else {
+      json = JSON.parse(new TextDecoder().decode(buf));
+    }
+    if (!json) throw new Error('no glTF JSON chunk');
+    // Compressed geometry needs a decoder this page deliberately does not ship.
+    const req = json.extensionsRequired || [];
+    if (req.length) { const e = new Error('ext'); e.exts = req.join(', '); throw e; }
+
+    const buffers = (json.buffers || []).map(b => {
+      if (!b.uri) return bin;
+      if (/^data:/.test(b.uri)) return b64ToBuf(b.uri);
+      const e = new Error('external'); e.uri = b.uri; throw e;
+    });
+    const CSIZE = { 5120:1, 5121:1, 5122:2, 5123:2, 5125:4, 5126:4 };
+    const NCOMP = { SCALAR:1, VEC2:2, VEC3:3, VEC4:4, MAT4:16 };
+    function readAccessor(ai) {
+      const acc = json.accessors[ai];
+      const bv = json.bufferViews[acc.bufferView];
+      const src = buffers[bv.buffer || 0];
+      if (!src) throw new Error('missing buffer');
+      const cs = CSIZE[acc.componentType], nc = NCOMP[acc.type];
+      const base = (bv.byteOffset || 0) + (acc.byteOffset || 0);
+      const stride = bv.byteStride || cs * nc;
+      const d = new DataView(src);
+      const out = new Float32Array(acc.count * nc);
+      for (let i = 0; i < acc.count; i++) {
+        for (let c = 0; c < nc; c++) {
+          const off = base + i * stride + c * cs;
+          let v;
+          switch (acc.componentType) {
+            case 5126: v = d.getFloat32(off, true); break;
+            case 5125: v = d.getUint32(off, true); break;
+            case 5123: v = d.getUint16(off, true); break;
+            case 5121: v = d.getUint8(off); break;
+            case 5122: v = d.getInt16(off, true); break;
+            default:   v = d.getInt8(off);
+          }
+          out[i * nc + c] = v;
+        }
+      }
+      return out;
+    }
+    const tris = [];
+    const tmp = new THREE.Vector3();
+    function visit(ni, parent) {
+      const n = json.nodes[ni];
+      if (!n) return;
+      const local = new THREE.Matrix4();
+      if (n.matrix) local.fromArray(n.matrix);
+      else local.compose(
+        new THREE.Vector3().fromArray(n.translation || [0, 0, 0]),
+        new THREE.Quaternion().fromArray(n.rotation || [0, 0, 0, 1]),
+        new THREE.Vector3().fromArray(n.scale || [1, 1, 1]));
+      const world = new THREE.Matrix4().multiplyMatrices(parent, local);
+      if (n.mesh !== undefined && json.meshes[n.mesh]) {
+        for (const prim of json.meshes[n.mesh].primitives || []) {
+          if (prim.mode !== undefined && prim.mode !== 4) continue;   // triangles only
+          if (!prim.attributes || prim.attributes.POSITION === undefined) continue;
+          const pos = readAccessor(prim.attributes.POSITION);
+          const idx = prim.indices !== undefined ? readAccessor(prim.indices) : null;
+          const count = idx ? idx.length : pos.length / 3;
+          for (let i = 0; i < count; i++) {
+            const p = idx ? idx[i] : i;
+            tmp.set(pos[p * 3], pos[p * 3 + 1], pos[p * 3 + 2]).applyMatrix4(world);
+            tris.push([tmp.x, tmp.y, tmp.z]);
+          }
+        }
+      }
+      (n.children || []).forEach(c => visit(c, world));
+    }
+    const scene = json.scenes && json.scenes[json.scene || 0];
+    const roots = (scene && scene.nodes) || (json.nodes || []).map((_, i) => i);
+    const I = new THREE.Matrix4();
+    roots.forEach(r => visit(r, I));
+    return tris;
+  }
+
+  // Centre on the origin and scale to the same bounding size as the built-in
+  // shapes, so an uploaded model drops into the existing camera and morph.
+  //
+  // Takes a LIST of frames. A one-frame list is a static model; more than one
+  // is a baked vertex animation. Every frame must share one thinning stride and
+  // one centre/scale transform — computed across the whole sequence — or the
+  // model would jump and rescale on every frame as its bounding box breathed.
+  function buildFrames(frameTris) {
+    const n0 = frameTris[0].length;
+    for (const f of frameTris) {
+      if (f.length !== n0) { const e = new Error('framecount'); e.frames = true; throw e; }
+    }
+    let count = n0 / 3, thinned = false, stride = 1;
+    if (count > MAX_TRIS) { stride = Math.ceil(count / MAX_TRIS); thinned = true; }
+    if (stride > 1) {
+      frameTris = frameTris.map(tris => {
+        const kept = [];
+        for (let i = 0; i < tris.length / 3; i += stride) kept.push(tris[i*3], tris[i*3+1], tris[i*3+2]);
+        return kept;
+      });
+      count = frameTris[0].length / 3;
+    }
+    let miX=Infinity, miY=Infinity, miZ=Infinity, maX=-Infinity, maY=-Infinity, maZ=-Infinity;
+    for (const tris of frameTris) for (const v of tris) {
+      if (v[0]<miX) miX=v[0]; if (v[0]>maX) maX=v[0];
+      if (v[1]<miY) miY=v[1]; if (v[1]>maY) maY=v[1];
+      if (v[2]<miZ) miZ=v[2]; if (v[2]>maZ) maZ=v[2];
+    }
+    const cx=(miX+maX)/2, cy=(miY+maY)/2, cz=(miZ+maZ)/2;
+    const span = Math.max(maX-miX, maY-miY, maZ-miZ) || 1;
+    const sc = 2.1 / span;
+    const frames = frameTris.map(tris => {
+      const pos = new Float32Array(tris.length * 3);
+      for (let i = 0; i < tris.length; i++) {
+        pos[i*3]   = (tris[i][0] - cx) * sc;
+        pos[i*3+1] = (tris[i][1] - cy) * sc;
+        pos[i*3+2] = (tris[i][2] - cz) * sc;
+      }
+      return pos;
+    });
+    return { frames, tris: count, thinned };
+  }
+
+  // Non-indexed geometry shares no vertices between triangles, so the face
+  // normal IS the vertex normal — no averaging pass needed.
+  function faceNormalsInto(pos, out) {
+    for (let i = 0; i < pos.length; i += 9) {
+      const ax=pos[i],   ay=pos[i+1], az=pos[i+2];
+      const ux=pos[i+3]-ax, uy=pos[i+4]-ay, uz=pos[i+5]-az;
+      const vx=pos[i+6]-ax, vy=pos[i+7]-ay, vz=pos[i+8]-az;
+      let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+      const l = Math.sqrt(nx*nx+ny*ny+nz*nz) || 1;
+      nx/=l; ny/=l; nz/=l;
+      for (let k = 0; k < 3; k++) { out[i+k*3]=nx; out[i+k*3+1]=ny; out[i+k*3+2]=nz; }
+    }
+  }
+
+  // Walk the sequence and write the interpolated pose into basePos, which is
+  // what displace() then pushes around. Normals are only rebuilt when the
+  // integer frame changes: at 24fps against a 60fps loop that is ~2.5x less
+  // work than doing it every render frame, and the difference is invisible.
+  function advanceAnim(gd, dt) {
+    const n = gd.frames.length;
+    if (n < 2) return;
+    gd.t = (gd.t || 0) + dt * gd.fps * (+animEl.value / 100);
+    if (!isFinite(gd.t)) gd.t = 0;
+    const base = Math.floor(gd.t), f = gd.t - base;
+    const a = gd.frames[((base % n) + n) % n];
+    const b = gd.frames[((base + 1) % n + n) % n];
+    const out = gd.basePos;
+    for (let i = 0; i < out.length; i++) out[i] = a[i] + (b[i] - a[i]) * f;
+    const fi = ((base % n) + n) % n;
+    if (gd.lastFi !== fi) { faceNormalsInto(out, gd.baseNorm); gd.lastFi = fi; }
+  }
+
+  // Uploaded models outlive the tab. What gets stored is the *normalised*
+  // position buffer, not the source file: it is smaller, and restoring costs
+  // nothing because the parse, thin, centre and scale already happened.
+  const MODEL_DB = 'vizModels', MODEL_STORE = 'models';
+  function withStore(mode, fn) {
+    return new Promise((res, rej) => {
+      if (!window.indexedDB) return rej(new Error('no idb'));
+      const rq = indexedDB.open(MODEL_DB, 1);
+      rq.onupgradeneeded = () => {
+        const db = rq.result;
+        if (!db.objectStoreNames.contains(MODEL_STORE)) db.createObjectStore(MODEL_STORE, { keyPath: 'id' });
+      };
+      rq.onerror = () => rej(rq.error);
+      rq.onsuccess = () => {
+        const db = rq.result;
+        const tx = db.transaction(MODEL_STORE, mode);
+        const req = fn(tx.objectStore(MODEL_STORE));
+        tx.oncomplete = () => res(req && 'result' in req ? req.result : undefined);
+        tx.onerror = () => rej(tx.error);
+      };
+    });
+  }
+
+  function geomFromFrames(frames, fps) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(frames[0]), 3));
+    g.computeVertexNormals();
+    const gd = {
+      geom: g,
+      basePos: new Float32Array(frames[0]),
+      baseNorm: new Float32Array(g.attributes.normal.array),
+      tris: frames[0].length / 9
+    };
+    if (frames.length > 1) { gd.frames = frames; gd.fps = fps || 24; gd.t = 0; gd.lastFi = -1; }
+    return gd;
+  }
+
+  function registerModel(id, name, frames, fps) {
+    geomData[id] = geomFromFrames(frames, fps);
+    if (shapeOptions.indexOf(id) === -1) shapeOptions.push(id);   // joins Auto-VJ + arrow cycling
+    let grp = document.getElementById('shape-mine');
+    if (!grp) {
+      grp = document.createElement('optgroup');
+      grp.id = 'shape-mine';
+      grp.dataset.key = 'Mine';
+      grp.label = (L().grp && L().grp.Mine) || 'Mine';
+      shape3dSel.appendChild(grp);
+    }
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = frames.length > 1 ? name + ' \u25b8 ' + frames.length : name;
+    grp.appendChild(opt);
+    return geomData[id];
+  }
+
+  function addUserModel(name, frameTris, fps) {
+    if (!frameTris.length || !frameTris[0].length || frameTris[0].length % 3 !== 0) { toast(t('modelBad')); return; }
+    let built;
+    try { built = buildFrames(frameTris); }
+    catch (err) { toast(err.frames ? t('modelFrames') : t('modelBad')); return; }
+    const id = 'user_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    registerModel(id, name, built.frames, fps);
+    shape3dSel.value = id;
+    markManual('shape3d');
+    updateModelButtons();
+    toast(name + ' \u00b7 ' + built.tris.toLocaleString() + ' ' + t('tris') +
+          (built.frames.length > 1 ? ' \u00b7 ' + built.frames.length + ' ' + t('framesWord') : '') +
+          (built.thinned ? ' ' + t('thinned') : ''));
+    withStore('readwrite', st => st.put({ id, name, frames: built.frames, fps: fps || 24 }))
+      .catch(err => console.warn('Model not persisted:', err));
+  }
+
+  function deleteCurrentModel() {
+    const id = shape3dSel.value;
+    if (!/^user_/.test(id)) return;
+    const opt = shape3dSel.querySelector('option[value="' + id + '"]');
+    const name = opt ? opt.textContent : id;
+    if (opt) opt.remove();
+    const grp = document.getElementById('shape-mine');
+    if (grp && !grp.children.length) grp.remove();
+    delete geomData[id];
+    const i = shapeOptions.indexOf(id);
+    if (i !== -1) shapeOptions.splice(i, 1);
+    shape3dSel.value = 'sphere';
+    markManual('shape3d');
+    updateModelButtons();
+    toast(t('modelGone') + ': ' + name);
+    withStore('readwrite', st => st.delete(id)).catch(() => {});
+  }
+
+  function updateModelButtons() {
+    const del = document.getElementById('btn-model-del');
+    if (del) del.style.display = /^user_/.test(shape3dSel.value) ? '' : 'none';
+  }
+
+  function parseModelBuffer(name, buf) {
+    const ext = (name.match(/\.([^.]+)$/) || [, ''])[1].toLowerCase();
+    if (ext === 'stl') return parseSTL(buf);
+    if (ext === 'glb' || ext === 'gltf') return parseGLTF(buf);
+    return parseOBJ(new TextDecoder().decode(buf));
+  }
+  function readFile(f) {
+    return new Promise((res, rej) => {
+      const rd = new FileReader();
+      rd.onload = () => res(rd.result);
+      rd.onerror = () => rej(rd.error);
+      rd.readAsArrayBuffer(f);
+    });
+  }
+
+  // A baked animation arrives as many files that differ only by a trailing
+  // frame number (Blender writes dance_000001.obj, dance_000002.obj ...), so
+  // files are grouped by their name with those digits stripped. One file per
+  // group is an ordinary static model; several become a loop.
+  function groupSequences(files) {
+    const groups = new Map();
+    for (const f of files) {
+      const base = f.name.replace(/\.[^.]+$/, '');
+      const stem = base.replace(/[._-]?\d+$/, '') || base;
+      if (!groups.has(stem)) groups.set(stem, []);
+      groups.get(stem).push(f);
+    }
+    for (const [, list] of groups) {
+      list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    }
+    return groups;
+  }
+
+  const MAX_FRAMES = 240;
+  async function loadModelFiles(files) {
+    for (const [stem, list] of groupSequences(files)) {
+      try {
+        let use = list;
+        if (use.length > MAX_FRAMES) {
+          const step = Math.ceil(use.length / MAX_FRAMES);
+          use = use.filter((_, i) => i % step === 0);
+        }
+        const frames = [];
+        for (const f of use) frames.push(parseModelBuffer(f.name, await readFile(f)));
+        addUserModel(stem, frames, 24);
+      } catch (err) {
+        console.error('Model load failed:', err);
+        if (err.exts) toast(t('modelCompressed') + ': ' + err.exts);
+        else if (err.uri) toast(t('modelExternal'));
+        else if (err.frames) toast(t('modelFrames'));
+        else toast(t('modelBad'));
+      }
+    }
+  }
+  function loadModelFile(f) { loadModelFiles([f]); }
+
+  document.getElementById('btn-model').addEventListener('click',
+    () => document.getElementById('model-input').click());
+  document.getElementById('btn-model-del').addEventListener('click', deleteCurrentModel);
+  document.getElementById('model-input').addEventListener('change', e => {
+    loadModelFiles([...e.target.files]);
+    e.target.value = '';
+  });
+  shape3dSel.addEventListener('change', updateModelButtons);
+
+  // Bring back whatever this browser saved last time.
+  withStore('readonly', st => st.getAll()).then(rows => {
+    (rows || []).forEach(r => {
+      const frames = r.frames ? r.frames.map(f => new Float32Array(f)) : [new Float32Array(r.pos)];
+      registerModel(r.id, r.name, frames, r.fps);
+    });
+    updateModelButtons();
+  }).catch(() => updateModelButtons());
 
   function initThree() {
     renderer = new THREE.WebGLRenderer({
@@ -840,7 +1587,7 @@
     const k = new THREE.DirectionalLight(0xffffff, 1.0); k.position.set(2, 3, 4); scene.add(k);
     const f = new THREE.DirectionalLight(0xaaccff, 0.5); f.position.set(-2, -1, 2); scene.add(f);
     const r = new THREE.DirectionalLight(0xffaaff, 0.8); r.position.set(0, 0, -3); scene.add(r);
-    ['sphere','icosa','torus','wire','frog','cow','cat','mushroom','heart','diamond','pumpkin','snowman','robot','rocket'].forEach(k => { geomData[k] = makeGeom(k); });
+    ['sphere','cube','icosa','torus','wire','diamond','susan','discoman','danceman','blocks'].forEach(k => { geomData[k] = makeGeom(k); });
     threeReady = true;
   }
 
@@ -866,6 +1613,120 @@
       scene.add(wireMesh);
     }
     currentShape = key;
+    symDirty = true;                 // clones share this geometry, so rebuild them
+    echoDirty = true;
+  }
+
+  // ── 3D kaleidoscope ────────────────────────────────────────────
+  // The same Symmetry setting that folds the 2D layer folds this one: N-1 extra
+  // copies of the mesh, each turned a further 1/N of a revolution about Y and
+  // every other one mirrored. Geometry and materials are shared with the
+  // original, so displace() still runs exactly once per frame no matter how
+  // many copies are on screen — the cost is draw calls, not noise lookups.
+  let symClones = [], symDirty = false, symCount = 1;
+
+  function buildSymChildren() {
+    symClones.forEach(g => {
+      while (g.children.length) g.remove(g.children[0]);
+      if (!solidMesh) return;
+      g.add(new THREE.Mesh(solidMesh.geometry, solidMesh.material));
+      if (wireMesh) g.add(new THREE.Mesh(wireMesh.geometry, wireMesh.material));
+    });
+    symDirty = false;
+  }
+
+  function updateSym3D(n) {
+    const want = Math.max(0, n - 1);
+    if (want !== symClones.length) {
+      while (symClones.length > want) scene.remove(symClones.pop());
+      while (symClones.length < want) { const g = new THREE.Group(); scene.add(g); symClones.push(g); }
+      symDirty = true;
+    }
+    if (symDirty) buildSymChildren();
+    if (!symClones.length) return;
+
+    // A negative scale flips winding order, so mirrored copies would light from
+    // the inside out unless both sides are drawn.
+    const side = THREE.DoubleSide;
+    if (solidMesh && solidMesh.material.side !== side) { solidMesh.material.side = side; solidMesh.material.needsUpdate = true; }
+    if (wireMesh && wireMesh.material.side !== side) { wireMesh.material.side = side; wireMesh.material.needsUpdate = true; }
+
+    // Distance pushes every copy out along its own spoke, turning the
+    // interpenetrating mandala into a ring. The mirror flip lives on the child
+    // rather than the group: a group-level scale.x of -1 would negate the
+    // offset too and fold alternate copies back across the centre.
+    const dist = (+symDistEl.value / 100) * 1.7;
+    const step = (Math.PI * 2) / n;
+    for (let i = 0; i < symClones.length; i++) {
+      const g = symClones[i], k = i + 1;
+      g.rotation.y = step * k;
+      g.scale.set(1, 1, 1);
+      for (let c = 0; c < g.children.length; c++) {
+        const src = c === 0 ? solidMesh : wireMesh;
+        if (!src) continue;
+        const ch = g.children[c];
+        ch.rotation.copy(src.rotation);
+        ch.scale.copy(src.scale);
+        if (k % 2) ch.scale.x = -ch.scale.x;
+        ch.position.set(dist, 0, 0);
+      }
+    }
+    // The original joins its own ring, or the arrangement sits lopsided.
+    if (solidMesh) solidMesh.position.set(dist, 0, 0);
+    if (wireMesh) wireMesh.position.set(dist, 0, 0);
+  }
+
+  // ── Echo ───────────────────────────────────────────────────────
+  // The 2D layer has Trails; the 3D layer had nothing. These are ghost copies
+  // of the mesh wearing its pose from N frames ago, so the shape smears through
+  // its own rotation. They share the live geometry, which means each ghost
+  // shows the CURRENT deformation at a PAST orientation — cheap, and it reads
+  // as motion rather than as a stack of stale snapshots.
+  const ECHO_N = 4;
+  let echoMeshes = [], echoHist = [], echoDirty = false;
+
+  function updateEcho(amt) {
+    if (echoMeshes.length !== ECHO_N || echoDirty) {
+      echoMeshes.forEach(m => { scene.remove(m); m.material.dispose(); });
+      echoMeshes = [];
+      if (solidMesh) {
+        for (let i = 0; i < ECHO_N; i++) {
+          const m = new THREE.Mesh(solidMesh.geometry, new THREE.MeshBasicMaterial({
+            color: 0xffffff, transparent: true, opacity: 0.2,
+            depthWrite: false, side: THREE.DoubleSide
+          }));
+          scene.add(m); echoMeshes.push(m);
+        }
+      }
+      echoDirty = false;
+    }
+    if (!echoMeshes.length || !solidMesh) return;
+    echoHist.unshift({ x: solidMesh.rotation.x, y: solidMesh.rotation.y, s: solidMesh.scale.x });
+    const lag = Math.round(2 + amt * 7);
+    const need = ECHO_N * lag + 1;
+    if (echoHist.length > need) echoHist.length = need;
+    for (let i = 0; i < ECHO_N; i++) {
+      const h = echoHist[Math.min(echoHist.length - 1, (i + 1) * lag)];
+      const m = echoMeshes[i];
+      m.rotation.set(h.x, h.y, 0);
+      m.position.copy(solidMesh.position);
+      m.scale.setScalar(h.s * (1 + (i + 1) * 0.035));
+      m.material.opacity = amt * 0.42 * (1 - i / ECHO_N);
+      if (solidMesh.material.color) m.material.color.copy(solidMesh.material.color);
+    }
+  }
+  function clearEcho() {
+    if (!echoMeshes.length) return;
+    echoMeshes.forEach(m => { scene.remove(m); m.material.dispose(); });
+    echoMeshes = []; echoHist.length = 0;
+  }
+
+  function clearSym3D() {
+    if (symClones.length) { symClones.forEach(g => scene.remove(g)); symClones = []; }
+    if (solidMesh) solidMesh.position.set(0, 0, 0);
+    if (wireMesh) wireMesh.position.set(0, 0, 0);
+    if (solidMesh && solidMesh.material.side !== THREE.FrontSide) { solidMesh.material.side = THREE.FrontSide; solidMesh.material.needsUpdate = true; }
+    if (wireMesh && wireMesh.material.side !== THREE.FrontSide) { wireMesh.material.side = THREE.FrontSide; wireMesh.material.needsUpdate = true; }
   }
   function hash3(x,y,z) { let h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return h - Math.floor(h); }
   function noise3(x,y,z) {
@@ -939,11 +1800,39 @@
   new ResizeObserver(fit).observe(wrap);
 
   let smoothBuf = null;
+  // Raw, unrouted band envelopes. Everything downstream reads bassEnv/midEnv/
+  // highEnv instead, which are these three passed through the routing below.
+  let envBass = 0, envMid = 0, envHigh = 0;
   let bassEnv = 0, midEnv = 0, highEnv = 0;
+
+  // ===== BAND ROUTING =====
+  // Three semantic slots drive the whole instrument: pulse (size, inflation,
+  // travel), texture (detail and wobble) and sparkle (fine, fast motion). Each
+  // one is normally fed by its own band. Letting any slot be fed by any part of
+  // the spectrum re-voices all 22 2D modes and the 3D layer at once — hi-hats
+  // can pump the size while the bass ripples the surface — without adding a
+  // mode per idea.
+  //
+  // Typical energy differs a lot between bands, so a slot's output is scaled by
+  // what it expects over what the chosen source delivers. Default routing gives
+  // a ratio of exactly 1, so nothing changes until you change it; picking treble
+  // for pulse lifts a quiet band to bass-sized excursion instead of going dead.
+  const BAND_LEVEL = { bass: 0.40, mid: 0.26, high: 0.13, beat: 0.35, mix: 0.263 };
+  const SLOT_LEVEL = { pulse: 0.40, texture: 0.26, sparkle: 0.13 };
+  function routed(slot, beatNow) {
+    const src = routeEls[slot].value;
+    const v = (src === 'bass') ? envBass
+            : (src === 'mid') ? envMid
+            : (src === 'high') ? envHigh
+            : (src === 'beat') ? beatNow
+            : (envBass + envMid + envHigh) / 3;
+    return v * (SLOT_LEVEL[slot] / BAND_LEVEL[src]);
+  }
   let bassHistory = [], beatFlash = 0, phase = 0;
   let lastT = performance.now(), fpsSmooth = 60, frame = 0;
   let particles = [], mountainOffset = 0;
   let pulseRings = [], starfield = [], eqPeaks = [];
+  let emdrT = 0;
   let wfCanvas = null, wfCtx = null;
   let ripples = [], fireworks = [], fwSparks = [];
   let plasmaCanvas = null, plasmaCtx = null, plasmaImg = null;
@@ -954,6 +1843,7 @@
   let userSpin = { vx: 0, vy: 0 };
   const dragState = { active: false, lastX: 0, lastY: 0, moved: 0 };
   let shakeAmt = 0, wrapShaken = false;
+  let strobeLevel = 0, strobeShown = false;
   let morphTo = null, morphT = 1;
   let fxTmp = null, fxTmpCtx = null;
   let noiseTime = 0, smoothedSpeed = 1.0;
@@ -1048,9 +1938,9 @@
       kick /= ((kickHi - kickLo) * 255);
     }
     const sm = 0.70;
-    bassEnv = bassEnv * sm + bass * (1 - sm);
-    midEnv = midEnv * sm + mid * (1 - sm);
-    highEnv = highEnv * sm + high * (1 - sm);
+    envBass = envBass * sm + bass * (1 - sm);
+    envMid = envMid * sm + mid * (1 - sm);
+    envHigh = envHigh * sm + high * (1 - sm);
 
     beatTriggered = false;
     bassHistory.push(kick);
@@ -1072,6 +1962,14 @@
       beatPulse.style.transform = 'scale(1)';
     }
 
+    // Routing runs after the beat envelope exists, so "Beat" is a usable source.
+    const beatNow = Math.min(1, beatFlash);
+    bassEnv = routed('pulse', beatNow);
+    midEnv = routed('texture', beatNow);
+    highEnv = routed('sparkle', beatNow);
+
+    updateTempo(now / 1000, dt, beatTriggered);
+    paintTempo();
     updateVj(dt, beatTriggered);
 
     if (hueOnEl.checked) {
@@ -1098,8 +1996,11 @@
       smoothBuf[i] = smoothBuf[i] * sf + v * (1 - sf);
     }
     phase += (0.006 + bassEnv * 0.04) * speed;
+    emdrT += dt * 0.3 * speed;   // ~1.7s per pass at Spin 100
 
     if (do3D && threeReady) {
+      const gdCur = geomData[currentShape];
+      if (gdCur && gdCur.frames) advanceAnim(gdCur, dt);
       displace(currentShape, noiseTime,
                Math.min(1, bassEnv * sens), Math.min(1, midEnv * sens),
                Math.min(1.5, beatFlash), distort);
@@ -1132,6 +2033,13 @@
         wireMesh.rotation.copy(solidMesh.rotation);
         wireMesh.scale.setScalar((1 + beatFlash * 0.18 + bassEnv * 0.06) * morphScale * 1.005);
       }
+
+      // 3D folding is its own control now — independent of the 2D layer.
+      const sym3d = +sym3dSel.value || 1;
+      if (sym3d > 1) updateSym3D(sym3d); else clearSym3D();
+
+      const echoAmt = echoOnEl.checked ? (+echoEl.value / 100) : 0;
+      if (echoAmt > 0.001) updateEcho(echoAmt); else clearEcho();
 
       if (fogOnEl.checked) {
         const rad = camRadius(), haze = +fogEl.value / 100;
@@ -1212,6 +2120,7 @@
         for (let k = 0; k < sym; k++) {
           ctx.save();
           ctx.translate(cx, cy); ctx.rotate((k / sym) * Math.PI * 2);
+          ctx.translate((+symDistEl.value / 100) * Math.min(w, h) * 0.28, 0);
           if (k % 2 === 1) ctx.scale(-1, 1);
           ctx.translate(-cx, -cy);
           ctx.globalAlpha = 1 / Math.sqrt(sym);
@@ -1228,6 +2137,19 @@
     if (bursts.length) {
       if (!do2D) c2d.style.opacity = '1';
       drawBursts(w, h);
+    }
+
+    const strobeInt = +strobeEl.value / 100;
+    if (beatTriggered && strobeInt > 0) strobeLevel = Math.max(strobeLevel, strobeInt);
+    strobeLevel *= 0.78;
+    if (strobeLevel > 0.004) {
+      // capped at 0.55 rather than full white: a full-frame 100% flash on every
+      // kick is genuinely unpleasant, and unsafe for some viewers.
+      strobePlate.style.background = col1.value;
+      strobePlate.style.opacity = String(strobeLevel * 0.55);
+      strobeShown = true;
+    } else if (strobeShown) {
+      strobePlate.style.opacity = '0'; strobeShown = false; strobeLevel = 0;
     }
 
     const shakeInt = +shakeEl.value / 100;
@@ -1267,6 +2189,7 @@
     else if (mode === 'plasma') drawPlasma(w, h, c1, c2, c3, glow);
     else if (mode === 'fireworks') drawFireworks(w, h, c1, c2, c3, glow);
     else if (mode === 'drain') drawDrain(w, h, c1, c2, c3, glow);
+    else if (mode === 'emdr') drawEmdr(w, h, c1, c2, c3, glow);
   }
   function drawWave(w,h,c1,c2,c3,glow) {
     const mid = h / 2, S = smoothBuf.length;
@@ -1729,6 +2652,53 @@
       ctx.beginPath(); ctx.moveTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2); ctx.lineTo(p.x, p.y); ctx.stroke();
     }
   }
+  // Bilateral sweep. The whole point is a predictable left-right rhythm the eye
+  // can lock onto, so position comes off its own steady clock and the audio is
+  // only allowed to touch size, brightness and colour — never the pacing.
+  function drawEmdr(w,h,c1,c2,c3,glow) {
+    const cy = h / 2;
+    const margin = w * 0.08, span = w - margin * 2;
+    const ang = emdrT * Math.PI * 2;
+    const u = Math.sin(ang);                 // -1..1, eases at each reversal
+    const dir = Math.cos(ang);               // sign = travel direction
+    const x = margin + span * (u * 0.5 + 0.5);
+    const col = triColor(0.5 + u * 0.5, c1, c2, c3);
+    const r = Math.min(w, h) * 0.035 * (1 + bassEnv * 0.9 + beatFlash * 0.5);
+
+    ctx.strokeStyle = rgba(c3, 0.20);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(margin, cy); ctx.lineTo(w - margin, cy); ctx.stroke();
+
+    // streak trailing the direction of travel, shortest at the turns
+    const tail = span * 0.16 * Math.abs(dir);
+    const tx = x - Math.sign(dir) * tail;
+    const lg = ctx.createLinearGradient(x, cy, tx, cy);
+    lg.addColorStop(0, rgba(col, 0.5));
+    lg.addColorStop(1, rgba(col, 0));
+    ctx.strokeStyle = lg;
+    ctx.lineWidth = r * 1.1;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(tx, cy); ctx.lineTo(x, cy); ctx.stroke();
+
+    // a soft column so the light stays findable in peripheral vision
+    const vg = ctx.createLinearGradient(x, 0, x, h);
+    vg.addColorStop(0, rgba(col, 0));
+    vg.addColorStop(0.5, rgba(col, 0.10 + bassEnv * 0.10));
+    vg.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = vg;
+    ctx.fillRect(x - r * 0.9, 0, r * 1.8, h);
+
+    ctx.shadowColor = rgba(col, 0.95);
+    ctx.shadowBlur = glow + r * 1.6 + beatFlash * 20;
+    const rg = ctx.createRadialGradient(x, cy, 0, x, cy, r);
+    rg.addColorStop(0, rgba([255, 255, 255], 0.95));
+    rg.addColorStop(0.35, rgba(col, 0.9));
+    rg.addColorStop(1, rgba(col, 0));
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
   function drawDrain(w,h,c1,c2,c3,glow) {
     const cx = w / 2, cy = h / 2, N = freqData.length;
     const maxR = Math.hypot(w, h) * 0.55;
