@@ -75,7 +75,7 @@
   };
 
   // ===== LANGUAGE =====
-  // Norwegian ships first; English is the fallback layer. Nothing is tagged in
+  // Norks førsty så; English is the fallback layer. Nothing is tagged in
   // the markup — every string is reached through the id the control already
   // has, so the HTML stays readable and the copy lives in exactly one place.
   const LANG_KEY = 'viz.lang';
@@ -208,8 +208,8 @@
       keys: { title:'Tastatursnarveier', hint:'Trykk ? eller Esc for å lukke',
         rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Slå Auto-VJ av/på','Tapp tempo',
               'Innstillinger','Bytt tema','Forrige / neste 3D-form','Forrige / neste 2D-modus'] },
-      introTitle: 'Lydvisualisering',
-      introDesc: 'Klikk en kilde nedenfor for å starte. Prøv Auto-VJ med ditt eget spor.<br><b>H</b> skjuler grensesnittet · <b>?</b> viser alle snarveier.',
+      introTitle: 'Musikkvisualisering',
+      introDesc: 'Veldig kul visualizer med ymse effekter og modeller. Gå til Bevegelse og FX nederst for effekter. Trykk system og del lyd.<br><b>H</b> Skjul UI · <b>?</b> Shortcuts.',
       by: 'av',
       pause:'⏸ Pause', play:'▶ Spill', vjOn:'✨ Stopp VJ', vjOff:'✨ Auto-VJ',
       fsOn:'⛶ Avslutt', fsOff:'⛶ Full', midiOn:'På', midiOff:'Slå på',

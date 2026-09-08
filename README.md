@@ -1,2 +1,4 @@
 # Audio_Visualizer
-Visualize your audio Media Player style
+Visualiser lyd litt som old school WMP
+Lagd med HTML, ThreeJS og end del Claude da lol ._. 
+
