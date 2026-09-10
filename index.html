@@ -306,6 +306,8 @@
   }
   body:hover #bottom-bar { opacity: 1; }
   #bottom-bar::-webkit-scrollbar { display: none; }
+  /* [hidden] is weaker than the flex display the bar hands its children. */
+  #bottom-bar button[hidden] { display: none; }
   #bottom-bar button {
     font-family: var(--silk);
     font-size: var(--t-label);
@@ -911,13 +913,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the
   <div id="credit"><span class="by">by</span><span class="name">Snorre</span></div>
 
   <div id="bottom-bar">
-    <button id="btn-mic" title="Microphone">🎤 Mic</button>
+    <button id="btn-mic" title="Microphone">Mic</button>
     <button id="btn-sys" title="System / tab audio — tick &quot;share audio&quot; in the dialog">🔊 System</button>
+    <button id="btn-pop" hidden title="Open in its own window — needed for microphone and system audio when embedded">⧉ New window</button>
     <button id="btn-file" title="Upload audio file">📁 File</button>
     <button id="btn-demo" title="Demo tone">▶ Demo</button>
     <button id="btn-beat" title="Beat demo">⏱ Beat</button>
     <button id="btn-pause" title="Pause animation and music (Space)">⏸ Pause</button>
-    <button id="btn-vj" class="primary" title="Toggle Auto-VJ (V)">✨ Auto-VJ</button>
+    <button id="btn-vj" class="primary" title="Toggle Auto-VJ (V)">Auto-VJ</button>
     <button id="btn-fs" title="Fullscreen (F)">⛶ Full</button>
     <button id="btn-hide" title="Hide all UI (H)">👁 Hide</button>
     <button id="btn-keys" title="Keyboard shortcuts (?)">?</button>
@@ -1240,6 +1243,12 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the
       <label>Strobe</label>
       <input type="range" id="strobe" min="0" max="100" value="0">
       <span id="strobe-val" class="slider-val">0</span>
+    </div>
+    <div class="row">
+      <label>Glitch</label>
+      <input type="checkbox" id="glitch-on">
+      <input type="range" id="glitch" min="0" max="100" value="50">
+      <span id="glitch-val" class="slider-val">50</span>
     </div>
     <div class="row">
       <label>MIDI</label>

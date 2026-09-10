@@ -17,7 +17,7 @@
   const intro = document.getElementById('intro');
 
   // Slider readouts
-  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog','anim','echo','strobe','symdist'].forEach(n => {
+  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog','anim','echo','strobe','symdist','glitch'].forEach(n => {
     const el = document.getElementById(n);
     const out = document.getElementById(n + '-val');
     el.addEventListener('input', () => out.textContent = el.value);
@@ -65,6 +65,13 @@
   const morphOnEl = document.getElementById('morph-on');
   const fogOnEl = document.getElementById('fog-on');
   const fogEl = document.getElementById('fog');
+  const glitchOnEl = document.getElementById('glitch-on');
+  const glitchEl = document.getElementById('glitch');
+  // Embedded on itch.io (and anywhere else that iframes the page), the parent
+  // decides which powerful features this document may use. getUserMedia and
+  // getDisplayMedia are withheld by default, and nothing inside the frame can
+  // grant them back — the only fix is to leave the frame.
+  const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   const vjSyncEl = document.getElementById('vj-sync');
   const bpmTag = document.getElementById('bpm-tag');
   const tempoVal = document.getElementById('tempo-val');
@@ -96,7 +103,8 @@
         sens:'Sensitivity', beat:'Beat', distort:'Distort', speed:'Spin', smooth:'Smooth',
         opacity2d:'Opacity', glow:'Glow', trail:'Trails', 'bloom-on':'Bloom',
         'hue-on':'Hue cycle', 'cam-motion':'Camera', 'ab-on':'RGB split', 'fb-on':'Feedback',
-        shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe', 'btn-midi':'MIDI',
+        shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe',
+        'glitch-on':'Glitch', 'btn-midi':'MIDI',
         'btn-model':'Own model'
       },
       opt: {
@@ -121,24 +129,27 @@
         theme: { spectra:'Retro · rack tuner', aero:'Aero · Vista glass' }
       },
       grp: { Abstract:'Abstract', Models:'Models', Mine:'Mine' },
-      btn: { 'btn-mic':'🎤 Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
-        'btn-beat':'⏱ Beat', 'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
-        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap' },
+      btn: { 'btn-mic':'Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
+        'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
+        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap',
+        'btn-pop':'⧉ New window' },
       tip: { 'btn-mic':'Microphone', 'btn-sys':'System / tab audio — tick "share audio" in the dialog',
-        'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo',
+        'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo — press again to stop',
         'btn-pause':'Pause animation and music (Space)', 'btn-vj':'Toggle Auto-VJ (V)',
         'btn-fs':'Fullscreen (F)', 'btn-hide':'Hide all UI (H)', 'btn-keys':'Keyboard shortcuts (?)',
         'btn-panel':'Settings (P)', 'btn-reset':'Restore all settings to defaults',
         'btn-model':'Load your own .obj, .stl or .glb model',
         'btn-model-del':'Remove this model permanently',
-        'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.' },
+        'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.',
+        'btn-pop':'Open in its own window — needed for microphone and system audio when embedded' },
       keys: { title:'Keyboard shortcuts', hint:'Press ? or Esc to close',
         rows:['Play / pause','Hide all UI','Fullscreen','Randomize look','Toggle Auto-VJ','Tap tempo',
               'Settings panel','Switch skin','Prev / next 3D shape','Prev / next 2D mode'] },
       introTitle: 'Audio Visualizer',
       introDesc: 'Click a source below to start. Try Auto-VJ with your own track.<br><b>H</b> hides the UI · <b>?</b> shows all shortcuts.',
       by: 'by',
-      pause:'⏸ Pause', play:'▶ Play', vjOn:'✨ Stop VJ', vjOff:'✨ Auto-VJ',
+      pause:'⏸ Pause', play:'▶ Play', vjOn:'Stop VJ', vjOff:'Auto-VJ',
+      beatOn:'⏹ Stop', beatOff:'⏱ Beat',
       fsOn:'⛶ Exit', fsOff:'⛶ Full', midiOn:'On', midiOff:'Enable',
       t: {
         hueOff:'Hue cycle off', uiHidden:'UI hidden — press H to show', randomized:'🎲 Randomized',
@@ -154,7 +165,10 @@
         modelGone:'Model removed', modelCompressed:'Compressed glTF needs a decoder this page does not ship',
         modelExternal:'That .gltf points at separate files — export as .glb instead',
         framesWord:'frames', modelFrames:'Frames must all have the same vertex count',
-        tempoAuto:'Tempo: following the music', tempoTap:'Tempo', bpm:'BPM'
+        tempoAuto:'Tempo: following the music', tempoTap:'Tempo', bpm:'BPM',
+        sysFramed:'Embedded pages cannot capture system audio — open in its own window',
+        micFramed:'Embedded pages cannot use the microphone — open in its own window',
+        popBlocked:'This embed blocks new windows — open the page directly instead'
       }
     },
     no: {
@@ -168,7 +182,8 @@
         sens:'Følsomhet', beat:'Takt', distort:'Forvreng', speed:'Rotasjon', smooth:'Utjevning',
         opacity2d:'Dekkevne', glow:'Glød', trail:'Spor', 'bloom-on':'Bloom',
         'hue-on':'Fargesyklus', 'cam-motion':'Kamera', 'ab-on':'RGB-splitt', 'fb-on':'Tilbakekobling',
-        shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe', 'btn-midi':'MIDI',
+        shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe',
+        'glitch-on':'Glitch', 'btn-midi':'MIDI',
         'btn-model':'Egen modell'
       },
       opt: {
@@ -193,25 +208,28 @@
         theme: { spectra:'Retro · rack-tuner', aero:'Aero · Vista-glass' }
       },
       grp: { Abstract:'Abstrakt', Models:'Modeller', Mine:'Egne' },
-      btn: { 'btn-mic':'🎤 Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
-        'btn-beat':'⏱ Takt', 'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
-        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp' },
+      btn: { 'btn-mic':'Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
+        'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
+        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp',
+        'btn-pop':'⧉ Eget vindu' },
       tip: { 'btn-mic':'Mikrofon', 'btn-sys':'System-/fanelyd — huk av «del lyd» i dialogen',
-        'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo',
+        'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo — trykk igjen for å stoppe',
         'btn-pause':'Pause animasjon og musikk (mellomrom)', 'btn-vj':'Slå Auto-VJ av/på (V)',
         'btn-fs':'Fullskjerm (F)', 'btn-hide':'Skjul hele grensesnittet (H)',
         'btn-keys':'Tastatursnarveier (?)', 'btn-panel':'Innstillinger (P)',
         'btn-reset':'Tilbakestill alle innstillinger',
         'btn-model':'Last inn din egen .obj-, .stl- eller .glb-modell',
         'btn-model-del':'Fjern denne modellen permanent',
-        'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.' },
+        'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.',
+        'btn-pop':'Åpne i eget vindu — kreves for mikrofon og systemlyd når siden er innebygd' },
       keys: { title:'Tastatursnarveier', hint:'Trykk ? eller Esc for å lukke',
         rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Slå Auto-VJ av/på','Tapp tempo',
               'Innstillinger','Bytt tema','Forrige / neste 3D-form','Forrige / neste 2D-modus'] },
       introTitle: 'Musikkvisualisering',
       introDesc: 'Veldig kul visualizer med ymse effekter og modeller. Gå til Bevegelse og FX nederst for effekter. Trykk system og del lyd.<br><b>H</b> Skjul UI · <b>?</b> Shortcuts.',
       by: 'av',
-      pause:'⏸ Pause', play:'▶ Spill', vjOn:'✨ Stopp VJ', vjOff:'✨ Auto-VJ',
+      pause:'⏸ Pause', play:'▶ Spill', vjOn:'Stopp VJ', vjOff:'Auto-VJ',
+      beatOn:'⏹ Stopp', beatOff:'⏱ Takt',
       fsOn:'⛶ Avslutt', fsOff:'⛶ Full', midiOn:'På', midiOff:'Slå på',
       t: {
         hueOff:'Fargesyklus av', uiHidden:'Grensesnitt skjult — trykk H for å vise',
@@ -227,7 +245,10 @@
         modelGone:'Modell fjernet', modelCompressed:'Komprimert glTF krever en dekoder denne siden ikke har',
         modelExternal:'Denne .gltf-filen peker på egne filer — eksporter som .glb i stedet',
         framesWord:'bilder', modelFrames:'Alle bildene må ha like mange hjørner',
-        tempoAuto:'Tempo: følger musikken', tempoTap:'Tempo', bpm:'BPM'
+        tempoAuto:'Tempo: følger musikken', tempoTap:'Tempo', bpm:'BPM',
+        sysFramed:'Innebygde sider får ikke ta opp systemlyd — åpne i eget vindu',
+        micFramed:'Innebygde sider får ikke bruke mikrofonen — åpne i eget vindu',
+        popBlocked:'Denne rammen blokkerer nye vinduer — åpne siden direkte i stedet'
       }
     }
   };
@@ -309,6 +330,7 @@
     };
     set('btn-pause', D.play, D.pause);
     set('btn-vj', D.vjOn, D.vjOff);
+    set('btn-beat', D.beatOn, D.beatOff);
     set('btn-midi', D.midiOn, D.midiOff);
     const fb = document.getElementById('btn-fs');
     if (fb) fb.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? D.fsOn : D.fsOff;
@@ -429,6 +451,17 @@
   function applyVolume() {
     if (gainNode) gainNode.gain.value = outputEnabled ? (+volumeEl.value / 100) : 0;
   }
+  // The demo sources have no natural end, so Beat is a toggle: the button that
+  // started it stops it. Every other source clears it on the way in, through
+  // stopAll, so the lamp can never lie about what is playing.
+  let srcKind = null;
+  function setSource(kind) {
+    srcKind = kind;
+    const b = document.getElementById('btn-beat');
+    b.classList.toggle('on', kind === 'beat');
+    b.textContent = (kind === 'beat') ? L().beatOn : L().beatOff;
+  }
+
   function stopAll() {
     if (source) { try { source.disconnect(); } catch (e) {} source = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
@@ -436,10 +469,27 @@
     if (oscNodes) { oscNodes.forEach(n => { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} }); oscNodes = null; }
     outputEnabled = false;
     applyVolume();
+    setSource(null);
   }
   function dismissIntro() { intro.classList.add('hidden'); requestWakeLock(); }
 
+  // A blocked permission and a cancelled picker both arrive as NotAllowedError,
+  // so the error alone cannot tell them apart. The block comes back immediately
+  // though, while a person needs time to reach the Cancel button — inside a
+  // frame, an instant rejection is the embed refusing, not the user declining.
+  function deniedByFrame(t0) { return framed && performance.now() - t0 < 250; }
+
+  // Leaving the frame is the whole fix: the same URL as a top-level document
+  // gets the permissions the embed withheld.
+  const popBtn = document.getElementById('btn-pop');
+  if (framed) popBtn.hidden = false;
+  popBtn.addEventListener('click', () => {
+    const w = window.open(location.href, '_blank');
+    if (w) w.opener = null; else toast(t('popBlocked'));   // sandboxed frames refuse popups
+  });
+
   async function startMic() {
+    const t0 = performance.now();
     try {
       ensureCtx(); stopAll();
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -450,6 +500,7 @@
       running = true; dismissIntro();
     } catch (e) {
       console.error('Mic failed:', e);
+      if (deniedByFrame(t0)) toast(t('micFramed'));
     }
   }
   async function startSystem() {
@@ -457,6 +508,7 @@
       toast(t('sysNo'));
       return;
     }
+    const t0 = performance.now();
     try {
       ensureCtx(); stopAll();
       // getDisplayMedia requires a video request; system/tab audio rides along.
@@ -479,7 +531,8 @@
       toast(t('sysOn'));
     } catch (e) {
       console.error('System audio failed:', e);
-      if (e && e.name !== 'NotAllowedError') toast(t('sysFail'));
+      if (deniedByFrame(t0)) toast(t('sysFramed'));
+      else if (e && e.name !== 'NotAllowedError') toast(t('sysFail'));
     }
   }
   function startFile(file) {
@@ -534,12 +587,16 @@
     oscNodes.push({ stop: () => clearInterval(kickInt), disconnect: () => {} });
     kick();
     running = true; dismissIntro();
+    setSource('beat');
   }
 
   document.getElementById('btn-mic').addEventListener('click', startMic);
   document.getElementById('btn-sys').addEventListener('click', startSystem);
   document.getElementById('btn-demo').addEventListener('click', startDemo);
-  document.getElementById('btn-beat').addEventListener('click', startBeatDemo);
+  document.getElementById('btn-beat').addEventListener('click', () => {
+    if (srcKind === 'beat') { stopAll(); running = false; }
+    else startBeatDemo();
+  });
   document.getElementById('btn-file').addEventListener('click', () => document.getElementById('file-input').click());
   document.getElementById('file-input').addEventListener('change', e => {
     if (e.target.files[0]) startFile(e.target.files[0]);
@@ -717,7 +774,7 @@
   const midiStatus = document.getElementById('midi-status');
   let midiOn = false;
   const midiMap = new Map();
-  const midiTargets = ['sens','beat','distort','speed','smooth','glow','trail','opacity2d','volume','zoom','zoom2d','vj-speed','hue-speed','bloom'];
+  const midiTargets = ['sens','beat','distort','speed','smooth','glow','trail','opacity2d','volume','zoom','zoom2d','vj-speed','hue-speed','bloom','glitch'];
   function setControl(id, value) {
     const el = document.getElementById(id); if (!el) return;
     el.value = value;
@@ -966,7 +1023,10 @@
   }
   const shapeOptions = ['sphere','cube','icosa','torus','wire','diamond','susan','discoman','danceman','blocks'];
   const mode2dOptions = ['ribbon','wave','orb','nebula','particles','mountains','tunnel','spectrum','eq','radial','scope','waterfall','grid','rings','stars','cosmos','ripples','corona','plasma','fireworks','drain','emdr'];
-  const symOptions = [1,1,1,2,3,4,6,8];
+  // 6- and 8-fold read as busy at projection distance, so nothing that picks
+  // for you — Auto-VJ or the randomize key — reaches for them. Both are still
+  // in the dropdowns when you want them.
+  const symOptions = [1,1,1,2,3,4];
   const layerOptions = ['auto','auto','both','2d-only'];
 
   function setVj(on) {
@@ -1789,8 +1849,7 @@
     ctx.clearRect(0, 0, w, h);
     cBloom.width = Math.max(1, Math.floor(w / 2));
     cBloom.height = Math.max(1, Math.floor(h / 2));
-    cFx.width = Math.max(1, Math.floor(w / 2));
-    cFx.height = Math.max(1, Math.floor(h / 2));
+    sizeFx();
     if (renderer) {
       applyPixelRatio();
       renderer.setSize(w, h, true);
@@ -1798,6 +1857,18 @@
     }
   }
   new ResizeObserver(fit).observe(wrap);
+
+  // Bloom and aberration are blurs, so half resolution is free quality. Glitch
+  // replaces the frame outright, and a half-res copy stretched back over the
+  // stage would soften every wireframe on screen — so it gets the full size,
+  // and only while it is switched on.
+  function sizeFx() {
+    const div = glitchOnEl.checked ? 1 : 2;
+    const fw = Math.max(1, Math.floor(logicW / div));
+    const fh = Math.max(1, Math.floor(logicH / div));
+    if (cFx.width !== fw || cFx.height !== fh) { cFx.width = fw; cFx.height = fh; }
+  }
+  glitchOnEl.addEventListener('change', sizeFx);
 
   let smoothBuf = null;
   // Raw, unrouted band envelopes. Everything downstream reads bassEnv/midEnv/
@@ -1972,6 +2043,12 @@
     paintTempo();
     updateVj(dt, beatTriggered);
 
+    if (glitchOnEl.checked && +glitchEl.value > 0) {
+      if (beatTriggered) { glitchLevel = 1; diceGlitch(); }
+      else if (Math.random() < 0.05) diceGlitch();
+      glitchLevel = Math.max(0.10 + midEnv * 0.25, glitchLevel * 0.80);
+    } else glitchLevel = 0;
+
     if (hueOnEl.checked) {
       hueBase = (hueBase + dt * (+hueSpeedEl.value / 100) * 0.05) % 1;
       col1.value = rgbToHex(hsl2rgb(hueBase, 0.85, 0.60));
@@ -2075,8 +2152,14 @@
       } else {
         cBloom.style.opacity = '0';
       }
-      if (abOnEl.checked) {
-        drawAberration();
+      if (glitchOnEl.checked) {
+        drawGlitch(cFx.width, cFx.height);
+        // Glitch lays down an opaque frame, so aberration adds onto it rather
+        // than clearing it away.
+        if (abOnEl.checked) drawAberration(false);
+        cFx.style.opacity = '1';
+      } else if (abOnEl.checked) {
+        drawAberration(true);
         cFx.style.opacity = '1';
       } else {
         cFx.style.opacity = '0';
@@ -2133,6 +2216,8 @@
     } else {
       ctx.clearRect(0, 0, w, h);
     }
+
+    if (do2D && glitchLevel > 0.001) glitch2D(w, h);
 
     if (bursts.length) {
       if (!do2D) c2d.style.opacity = '1';
@@ -2991,6 +3076,79 @@
     ctx.globalCompositeOperation = 'source-over';
   }
 
+  // ===== GLITCH =====
+  // The frame torn into horizontal bands and shoved sideways. The kick re-dices
+  // the bands and slams the level to full; between hits it decays to a low idle
+  // churn, so the tear lands *with* the drum instead of shimmering constantly.
+  //
+  // Bands are stored as fractions of height, not pixels, because the same list
+  // has to drive two canvases that are not the same size.
+  let glitchLevel = 0, glitchTmp = null, glitchTmpCtx = null;
+  const glitchBands = [];
+  function diceGlitch() {
+    glitchBands.length = 0;
+    const n = 7 + Math.floor(Math.random() * 9);
+    let y = 0;
+    while (y < 1 && glitchBands.length < 24) {
+      const bh = Math.min(1 - y, (1 / n) * (0.35 + Math.random() * 1.5));
+      glitchBands.push({ y, h: bh, dx: Math.random() * 2 - 1, tear: Math.random() < 0.3 });
+      y += bh;
+    }
+  }
+  diceGlitch();
+  function glitchAmt() { return glitchLevel * (+glitchEl.value / 100); }
+
+  // A band shoved sideways would leave a gap at the edge it came from, so every
+  // band is drawn twice, one stage-width apart: the frame wraps instead of tearing
+  // to black. The second copy is almost entirely off-canvas and costs nothing.
+  function glitchBand(c, src, sy, sh, dy, dh, dx, sw, dw) {
+    c.drawImage(src, 0, sy, sw, sh, dx, dy, dw, dh);
+    c.drawImage(src, 0, sy, sw, sh, dx + (dx > 0 ? -dw : dw), dy, dw, dh);
+  }
+
+  function drawGlitch(bw, bh) {
+    fxctx.clearRect(0, 0, bw, bh);
+    fxctx.globalCompositeOperation = 'source-over';
+    fxctx.globalAlpha = 1;
+    const amt = glitchAmt(), shift = bw * 0.18 * amt;
+    for (const b of glitchBands) {
+      const dy = Math.floor(b.y * bh), dh = Math.ceil(b.h * bh);
+      if (dh < 1) continue;
+      const sy = b.y * c3d.height, sh = b.h * c3d.height;
+      const dx = b.dx * shift;
+      glitchBand(fxctx, c3d, sy, sh, dy, dh, dx, c3d.width, bw);
+      if (b.tear && Math.abs(dx) > 1) {
+        // A torn band leaves a bright ghost where it pulled away from.
+        fxctx.globalCompositeOperation = 'lighter';
+        fxctx.globalAlpha = 0.45 * amt;
+        fxctx.drawImage(c3d, 0, sy, c3d.width, sh, -dx * 0.6, dy, bw, dh);
+        fxctx.globalCompositeOperation = 'source-over';
+        fxctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // The 2D layer is torn in place: copy it out, clear it, put the bands back
+  // displaced. Source coordinates stay in device pixels, destinations in the
+  // logical pixels the 2D context is already scaled to.
+  function glitch2D(w, h) {
+    if (!glitchTmp) { glitchTmp = document.createElement('canvas'); glitchTmpCtx = glitchTmp.getContext('2d'); }
+    if (glitchTmp.width !== c2d.width || glitchTmp.height !== c2d.height) {
+      glitchTmp.width = c2d.width; glitchTmp.height = c2d.height;
+    }
+    glitchTmpCtx.globalCompositeOperation = 'copy';
+    glitchTmpCtx.drawImage(c2d, 0, 0);
+    glitchTmpCtx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, w, h);
+    const shift = w * 0.18 * glitchAmt();
+    for (const b of glitchBands) {
+      const dy = b.y * h, dh = b.h * h;
+      if (dh < 0.5) continue;
+      glitchBand(ctx, glitchTmp, b.y * glitchTmp.height, b.h * glitchTmp.height,
+                 dy, dh, b.dx * shift, glitchTmp.width, w);
+    }
+  }
+
   // Bloom: blurred bright-pass copy of the 3D canvas, screen-blended over it
   function drawBloom() {
     const bw = cBloom.width, bh = cBloom.height;
@@ -3010,13 +3168,13 @@
   }
 
   // Chromatic aberration: additive red/blue channel copies, shifted opposite ways
-  function drawAberration() {
+  function drawAberration(clear) {
     const bw = cFx.width, bh = cFx.height;
     if (!fxTmp) { fxTmp = document.createElement('canvas'); fxTmpCtx = fxTmp.getContext('2d'); }
     if (fxTmp.width !== bw || fxTmp.height !== bh) { fxTmp.width = bw; fxTmp.height = bh; }
     const amt = +abEl.value / 100;
     const off = 1 + amt * 6 + beatFlash * amt * 12;
-    fxctx.clearRect(0, 0, bw, bh);
+    if (clear) fxctx.clearRect(0, 0, bw, bh);
     fxctx.globalCompositeOperation = 'lighter';
     // isolate + draw red channel shifted right
     isolateChannel('#ff0000', bw, bh);
