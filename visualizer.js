@@ -105,7 +105,7 @@
         'hue-on':'Hue cycle', 'cam-motion':'Camera', 'ab-on':'RGB split', 'fb-on':'Feedback',
         shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe',
         'glitch-on':'Glitch', 'btn-midi':'MIDI',
-        'btn-model':'Own model'
+        'btn-model':'Own model', 'btn-roll':'Random FX'
       },
       opt: {
         'layer-mode': { auto:'3D only', both:'Both layered', '2d-only':'2D only' },
@@ -131,7 +131,7 @@
       grp: { Abstract:'Abstract', Models:'Models', Mine:'Mine' },
       btn: { 'btn-mic':'Mic', 'btn-sys':'🔊 System', 'btn-file':'📁 File', 'btn-demo':'▶ Demo',
         'btn-hide':'👁 Hide', 'btn-reset':'↺ Reset to defaults',
-        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap',
+        'btn-model':'Upload', 'btn-model-del':'Delete', 'btn-tap':'Tap', 'btn-roll':'Roll',
         'btn-pop':'⧉ New window' },
       tip: { 'btn-mic':'Microphone', 'btn-sys':'System / tab audio — tick "share audio" in the dialog',
         'btn-file':'Upload audio file', 'btn-demo':'Demo tone', 'btn-beat':'Beat demo — press again to stop',
@@ -141,9 +141,10 @@
         'btn-model':'Load your own .obj, .stl or .glb model',
         'btn-model-del':'Remove this model permanently',
         'btn-tap':'Tap the beat to set the tempo (B). One tap after a pause returns to automatic.',
-        'btn-pop':'Open in its own window — needed for microphone and system audio when embedded' },
+        'btn-pop':'Open in its own window — needed for microphone and system audio when embedded',
+        'btn-roll':'Roll a new combination of effects (X)' },
       keys: { title:'Keyboard shortcuts', hint:'Press ? or Esc to close',
-        rows:['Play / pause','Hide all UI','Fullscreen','Randomize look','Toggle Auto-VJ','Tap tempo',
+        rows:['Play / pause','Hide all UI','Fullscreen','Randomize look','Random effects','Toggle Auto-VJ','Tap tempo',
               'Settings panel','Switch skin','Prev / next 3D shape','Prev / next 2D mode'] },
       introTitle: 'Audio Visualizer',
       introDesc: 'Click a source below to start. Try Auto-VJ with your own track.<br><b>H</b> hides the UI · <b>?</b> shows all shortcuts.',
@@ -152,7 +153,7 @@
       beatOn:'⏹ Stop', beatOff:'⏱ Beat',
       fsOn:'⛶ Exit', fsOff:'⛶ Full', midiOn:'On', midiOff:'Enable',
       t: {
-        hueOff:'Hue cycle off', uiHidden:'UI hidden — press H to show', randomized:'🎲 Randomized',
+        hueOff:'Hue cycle off', uiHidden:'UI hidden — press H to show', randomized:'🎲 Randomized', fxRolled:'🎲 Random effects',
         paused:'⏸ Paused', playing:'▶ Playing', reset:'↺ Reset to defaults',
         skin:'Skin', shape:'Shape', mode2d:'2D mode', lang:'Language',
         sysNo:'System audio not supported in this browser',
@@ -184,7 +185,7 @@
         'hue-on':'Fargesyklus', 'cam-motion':'Kamera', 'ab-on':'RGB-splitt', 'fb-on':'Tilbakekobling',
         shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe',
         'glitch-on':'Glitch', 'btn-midi':'MIDI',
-        'btn-model':'Egen modell'
+        'btn-model':'Egen modell', 'btn-roll':'Tilfeldig FX'
       },
       opt: {
         'layer-mode': { auto:'Kun 3D', both:'Begge lagvis', '2d-only':'Kun 2D' },
@@ -210,7 +211,7 @@
       grp: { Abstract:'Abstrakt', Models:'Modeller', Mine:'Egne' },
       btn: { 'btn-mic':'Mik', 'btn-sys':'🔊 System', 'btn-file':'📁 Fil', 'btn-demo':'▶ Demo',
         'btn-hide':'👁 Skjul', 'btn-reset':'↺ Tilbakestill',
-        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp',
+        'btn-model':'Last opp', 'btn-model-del':'Slett', 'btn-tap':'Tapp', 'btn-roll':'Trill',
         'btn-pop':'⧉ Eget vindu' },
       tip: { 'btn-mic':'Mikrofon', 'btn-sys':'System-/fanelyd — huk av «del lyd» i dialogen',
         'btn-file':'Last opp lydfil', 'btn-demo':'Demotone', 'btn-beat':'Taktdemo — trykk igjen for å stoppe',
@@ -221,9 +222,10 @@
         'btn-model':'Last inn din egen .obj-, .stl- eller .glb-modell',
         'btn-model-del':'Fjern denne modellen permanent',
         'btn-tap':'Tapp takten for å sette tempoet (B). Ett tapp etter en pause går tilbake til automatikk.',
-        'btn-pop':'Åpne i eget vindu — kreves for mikrofon og systemlyd når siden er innebygd' },
+        'btn-pop':'Åpne i eget vindu — kreves for mikrofon og systemlyd når siden er innebygd',
+        'btn-roll':'Trill en ny kombinasjon av effekter (X)' },
       keys: { title:'Tastatursnarveier', hint:'Trykk ? eller Esc for å lukke',
-        rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Slå Auto-VJ av/på','Tapp tempo',
+        rows:['Spill / pause','Skjul grensesnittet','Fullskjerm','Tilfeldig utseende','Tilfeldige effekter','Slå Auto-VJ av/på','Tapp tempo',
               'Innstillinger','Bytt tema','Forrige / neste 3D-form','Forrige / neste 2D-modus'] },
       introTitle: 'Musikkvisualisering',
       introDesc: 'Veldig kul visualizer med ymse effekter og modeller. Gå til Bevegelse og FX nederst for effekter. Trykk system og del lyd.<br><b>H</b> Skjul UI · <b>?</b> Shortcuts.',
@@ -233,7 +235,7 @@
       fsOn:'⛶ Avslutt', fsOff:'⛶ Full', midiOn:'På', midiOff:'Slå på',
       t: {
         hueOff:'Fargesyklus av', uiHidden:'Grensesnitt skjult — trykk H for å vise',
-        randomized:'🎲 Tilfeldig', paused:'⏸ Pauset', playing:'▶ Spiller', reset:'↺ Tilbakestilt',
+        randomized:'🎲 Tilfeldig', fxRolled:'🎲 Tilfeldige effekter', paused:'⏸ Pauset', playing:'▶ Spiller', reset:'↺ Tilbakestilt',
         skin:'Tema', shape:'Form', mode2d:'2D-modus', lang:'Språk',
         sysNo:'Systemlyd støttes ikke i denne nettleseren',
         sysNoAudio:'Ingen lyd delt — huk av «del fane-/systemlyd» i dialogen',
@@ -688,6 +690,40 @@
     setSliderVal('speed', Math.round(rand(60, 180)));
     toast(t('randomized'));
   }
+  // Random FX: a deliberately sparse roll. Everything on at once is mush and a
+  // framerate hit, so it lights two to four and silences the rest.
+  //
+  // Two controls are held out on purpose. Strobe, because a full-frame flash on
+  // every kick is a photosensitivity risk and that belongs to the person at the
+  // keyboard, not to a dice roll. Morph, because it is a preference about how
+  // shapes change rather than a look, so a roll has no business moving it.
+  const fxPool = [
+    { on: 'bloom-on',  val: 'bloom',     lo: 25, hi: 85 },
+    { on: 'hue-on',    val: 'hue-speed', lo: 15, hi: 70 },
+    { on: 'ab-on',     val: 'ab',        lo: 20, hi: 80 },
+    { on: 'fb-on',     val: 'fb',        lo: 25, hi: 70 },
+    { on: 'fog-on',    val: 'fog',       lo: 25, hi: 80 },
+    { on: 'echo-on',   val: 'echo',      lo: 25, hi: 75 },
+    { on: 'glitch-on', val: 'glitch',    lo: 30, hi: 100 }
+  ];
+  function randomFx() {
+    fxPool.forEach(f => { document.getElementById(f.on).checked = false; });
+    const draw = fxPool.slice();
+    const n = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n && draw.length; i++) {
+      const f = draw.splice(Math.floor(Math.random() * draw.length), 1)[0];
+      document.getElementById(f.on).checked = true;
+      setSliderVal(f.val, Math.round(rand(f.lo, f.hi)));
+    }
+    // Camera and shake are dials rather than switches, so they get a value every
+    // roll instead of a place in the draw.
+    camMotionEl.value = pick(['none', 'none', 'orbit', 'dolly', 'sway']);
+    setSliderVal('shake', Math.random() < 0.45 ? Math.round(rand(10, 55)) : 0);
+    sizeFx();   // glitch may have just flipped, and it owns the FX resolution
+    toast(t('fxRolled'));
+  }
+  document.getElementById('btn-roll').addEventListener('click', randomFx);
+
   function cycleSelect(sel, options, dir, id, label) {
     const i = options.indexOf(sel.value);
     sel.value = options[(i + dir + options.length) % options.length];
@@ -715,6 +751,7 @@
       case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
       case 'h': case 'H': e.preventDefault(); setUiHidden(!uiHidden); break;
       case 'r': case 'R': e.preventDefault(); randomizeAll(); break;
+      case 'x': case 'X': e.preventDefault(); randomFx(); break;
       case 'v': case 'V': e.preventDefault(); setVj(!vjActive); break;
       case 'b': case 'B': e.preventDefault(); tapTempo(); break;
       case 'p': case 'P': e.preventDefault(); panel.classList.toggle('open'); break;
