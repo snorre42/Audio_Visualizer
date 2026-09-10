@@ -17,7 +17,7 @@
   const intro = document.getElementById('intro');
 
   // Slider readouts
-  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog','anim','echo','strobe','symdist'].forEach(n => {
+  ['vj-speed','opacity2d','sens','speed','smooth','beat','distort','glow','trail','volume','zoom','zoom2d','bloom','hue-speed','ab','fb','shake','fog','anim','echo','strobe','symdist','glitch'].forEach(n => {
     const el = document.getElementById(n);
     const out = document.getElementById(n + '-val');
     el.addEventListener('input', () => out.textContent = el.value);
@@ -65,6 +65,8 @@
   const morphOnEl = document.getElementById('morph-on');
   const fogOnEl = document.getElementById('fog-on');
   const fogEl = document.getElementById('fog');
+  const glitchOnEl = document.getElementById('glitch-on');
+  const glitchEl = document.getElementById('glitch');
   // Embedded on itch.io (and anywhere else that iframes the page), the parent
   // decides which powerful features this document may use. getUserMedia and
   // getDisplayMedia are withheld by default, and nothing inside the frame can
@@ -101,7 +103,8 @@
         sens:'Sensitivity', beat:'Beat', distort:'Distort', speed:'Spin', smooth:'Smooth',
         opacity2d:'Opacity', glow:'Glow', trail:'Trails', 'bloom-on':'Bloom',
         'hue-on':'Hue cycle', 'cam-motion':'Camera', 'ab-on':'RGB split', 'fb-on':'Feedback',
-        shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe', 'btn-midi':'MIDI',
+        shake:'Shake', 'morph-on':'Morph', 'fog-on':'Fog', 'echo-on':'Echo', strobe:'Strobe',
+        'glitch-on':'Glitch', 'btn-midi':'MIDI',
         'btn-model':'Own model'
       },
       opt: {
@@ -179,7 +182,8 @@
         sens:'Følsomhet', beat:'Takt', distort:'Forvreng', speed:'Rotasjon', smooth:'Utjevning',
         opacity2d:'Dekkevne', glow:'Glød', trail:'Spor', 'bloom-on':'Bloom',
         'hue-on':'Fargesyklus', 'cam-motion':'Kamera', 'ab-on':'RGB-splitt', 'fb-on':'Tilbakekobling',
-        shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe', 'btn-midi':'MIDI',
+        shake:'Risting', 'morph-on':'Morf', 'fog-on':'Tåke', 'echo-on':'Ekko', strobe:'Strobe',
+        'glitch-on':'Glitch', 'btn-midi':'MIDI',
         'btn-model':'Egen modell'
       },
       opt: {
@@ -770,7 +774,7 @@
   const midiStatus = document.getElementById('midi-status');
   let midiOn = false;
   const midiMap = new Map();
-  const midiTargets = ['sens','beat','distort','speed','smooth','glow','trail','opacity2d','volume','zoom','zoom2d','vj-speed','hue-speed','bloom'];
+  const midiTargets = ['sens','beat','distort','speed','smooth','glow','trail','opacity2d','volume','zoom','zoom2d','vj-speed','hue-speed','bloom','glitch'];
   function setControl(id, value) {
     const el = document.getElementById(id); if (!el) return;
     el.value = value;
@@ -1845,8 +1849,7 @@
     ctx.clearRect(0, 0, w, h);
     cBloom.width = Math.max(1, Math.floor(w / 2));
     cBloom.height = Math.max(1, Math.floor(h / 2));
-    cFx.width = Math.max(1, Math.floor(w / 2));
-    cFx.height = Math.max(1, Math.floor(h / 2));
+    sizeFx();
     if (renderer) {
       applyPixelRatio();
       renderer.setSize(w, h, true);
@@ -1854,6 +1857,18 @@
     }
   }
   new ResizeObserver(fit).observe(wrap);
+
+  // Bloom and aberration are blurs, so half resolution is free quality. Glitch
+  // replaces the frame outright, and a half-res copy stretched back over the
+  // stage would soften every wireframe on screen — so it gets the full size,
+  // and only while it is switched on.
+  function sizeFx() {
+    const div = glitchOnEl.checked ? 1 : 2;
+    const fw = Math.max(1, Math.floor(logicW / div));
+    const fh = Math.max(1, Math.floor(logicH / div));
+    if (cFx.width !== fw || cFx.height !== fh) { cFx.width = fw; cFx.height = fh; }
+  }
+  glitchOnEl.addEventListener('change', sizeFx);
 
   let smoothBuf = null;
   // Raw, unrouted band envelopes. Everything downstream reads bassEnv/midEnv/
@@ -2028,6 +2043,12 @@
     paintTempo();
     updateVj(dt, beatTriggered);
 
+    if (glitchOnEl.checked && +glitchEl.value > 0) {
+      if (beatTriggered) { glitchLevel = 1; diceGlitch(); }
+      else if (Math.random() < 0.05) diceGlitch();
+      glitchLevel = Math.max(0.10 + midEnv * 0.25, glitchLevel * 0.80);
+    } else glitchLevel = 0;
+
     if (hueOnEl.checked) {
       hueBase = (hueBase + dt * (+hueSpeedEl.value / 100) * 0.05) % 1;
       col1.value = rgbToHex(hsl2rgb(hueBase, 0.85, 0.60));
@@ -2131,8 +2152,14 @@
       } else {
         cBloom.style.opacity = '0';
       }
-      if (abOnEl.checked) {
-        drawAberration();
+      if (glitchOnEl.checked) {
+        drawGlitch(cFx.width, cFx.height);
+        // Glitch lays down an opaque frame, so aberration adds onto it rather
+        // than clearing it away.
+        if (abOnEl.checked) drawAberration(false);
+        cFx.style.opacity = '1';
+      } else if (abOnEl.checked) {
+        drawAberration(true);
         cFx.style.opacity = '1';
       } else {
         cFx.style.opacity = '0';
@@ -2189,6 +2216,8 @@
     } else {
       ctx.clearRect(0, 0, w, h);
     }
+
+    if (do2D && glitchLevel > 0.001) glitch2D(w, h);
 
     if (bursts.length) {
       if (!do2D) c2d.style.opacity = '1';
@@ -3047,6 +3076,79 @@
     ctx.globalCompositeOperation = 'source-over';
   }
 
+  // ===== GLITCH =====
+  // The frame torn into horizontal bands and shoved sideways. The kick re-dices
+  // the bands and slams the level to full; between hits it decays to a low idle
+  // churn, so the tear lands *with* the drum instead of shimmering constantly.
+  //
+  // Bands are stored as fractions of height, not pixels, because the same list
+  // has to drive two canvases that are not the same size.
+  let glitchLevel = 0, glitchTmp = null, glitchTmpCtx = null;
+  const glitchBands = [];
+  function diceGlitch() {
+    glitchBands.length = 0;
+    const n = 7 + Math.floor(Math.random() * 9);
+    let y = 0;
+    while (y < 1 && glitchBands.length < 24) {
+      const bh = Math.min(1 - y, (1 / n) * (0.35 + Math.random() * 1.5));
+      glitchBands.push({ y, h: bh, dx: Math.random() * 2 - 1, tear: Math.random() < 0.3 });
+      y += bh;
+    }
+  }
+  diceGlitch();
+  function glitchAmt() { return glitchLevel * (+glitchEl.value / 100); }
+
+  // A band shoved sideways would leave a gap at the edge it came from, so every
+  // band is drawn twice, one stage-width apart: the frame wraps instead of tearing
+  // to black. The second copy is almost entirely off-canvas and costs nothing.
+  function glitchBand(c, src, sy, sh, dy, dh, dx, sw, dw) {
+    c.drawImage(src, 0, sy, sw, sh, dx, dy, dw, dh);
+    c.drawImage(src, 0, sy, sw, sh, dx + (dx > 0 ? -dw : dw), dy, dw, dh);
+  }
+
+  function drawGlitch(bw, bh) {
+    fxctx.clearRect(0, 0, bw, bh);
+    fxctx.globalCompositeOperation = 'source-over';
+    fxctx.globalAlpha = 1;
+    const amt = glitchAmt(), shift = bw * 0.18 * amt;
+    for (const b of glitchBands) {
+      const dy = Math.floor(b.y * bh), dh = Math.ceil(b.h * bh);
+      if (dh < 1) continue;
+      const sy = b.y * c3d.height, sh = b.h * c3d.height;
+      const dx = b.dx * shift;
+      glitchBand(fxctx, c3d, sy, sh, dy, dh, dx, c3d.width, bw);
+      if (b.tear && Math.abs(dx) > 1) {
+        // A torn band leaves a bright ghost where it pulled away from.
+        fxctx.globalCompositeOperation = 'lighter';
+        fxctx.globalAlpha = 0.45 * amt;
+        fxctx.drawImage(c3d, 0, sy, c3d.width, sh, -dx * 0.6, dy, bw, dh);
+        fxctx.globalCompositeOperation = 'source-over';
+        fxctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // The 2D layer is torn in place: copy it out, clear it, put the bands back
+  // displaced. Source coordinates stay in device pixels, destinations in the
+  // logical pixels the 2D context is already scaled to.
+  function glitch2D(w, h) {
+    if (!glitchTmp) { glitchTmp = document.createElement('canvas'); glitchTmpCtx = glitchTmp.getContext('2d'); }
+    if (glitchTmp.width !== c2d.width || glitchTmp.height !== c2d.height) {
+      glitchTmp.width = c2d.width; glitchTmp.height = c2d.height;
+    }
+    glitchTmpCtx.globalCompositeOperation = 'copy';
+    glitchTmpCtx.drawImage(c2d, 0, 0);
+    glitchTmpCtx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, w, h);
+    const shift = w * 0.18 * glitchAmt();
+    for (const b of glitchBands) {
+      const dy = b.y * h, dh = b.h * h;
+      if (dh < 0.5) continue;
+      glitchBand(ctx, glitchTmp, b.y * glitchTmp.height, b.h * glitchTmp.height,
+                 dy, dh, b.dx * shift, glitchTmp.width, w);
+    }
+  }
+
   // Bloom: blurred bright-pass copy of the 3D canvas, screen-blended over it
   function drawBloom() {
     const bw = cBloom.width, bh = cBloom.height;
@@ -3066,13 +3168,13 @@
   }
 
   // Chromatic aberration: additive red/blue channel copies, shifted opposite ways
-  function drawAberration() {
+  function drawAberration(clear) {
     const bw = cFx.width, bh = cFx.height;
     if (!fxTmp) { fxTmp = document.createElement('canvas'); fxTmpCtx = fxTmp.getContext('2d'); }
     if (fxTmp.width !== bw || fxTmp.height !== bh) { fxTmp.width = bw; fxTmp.height = bh; }
     const amt = +abEl.value / 100;
     const off = 1 + amt * 6 + beatFlash * amt * 12;
-    fxctx.clearRect(0, 0, bw, bh);
+    if (clear) fxctx.clearRect(0, 0, bw, bh);
     fxctx.globalCompositeOperation = 'lighter';
     // isolate + draw red channel shifted right
     isolateChannel('#ff0000', bw, bh);
